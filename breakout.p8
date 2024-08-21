@@ -61,9 +61,6 @@ function _update60()
 	local buttpress=false
 	local nextx,nexty
 	
-	--!debug
-	slope=ball_dy/ball_dx
-	
 	--move paddle left with btn
 	if btn(⬅️) then
 		pad_dx=-pad_s
@@ -135,6 +132,9 @@ function _update60()
 			ball_y=pad_y-ball_r
 			
 		end
+		
+		sfx(1)
+		
 	end --if ball_col()
 	
 	--update ball position
@@ -155,10 +155,6 @@ function _draw()
 	rectfill(
 	pad_x,pad_y,pad_x+pad_w,
 	pad_y+pad_h,pad_c)
-	
-	--!debug
-	print("slope:"..
-	slope,0,0)
 
 end --_draw
 
@@ -206,17 +202,12 @@ end --ball_col()
 
 --ball deflection
 
---slope (bdy/bdx) map
---	positive(1)=⬆️⬅️/⬇️➡️
---	negative(-1)=⬆️➡️/⬇️⬅️
--- null(0)=⬅️/➡️
--- infinite=⬆️/⬇️
-
 function ball_defl(
-nx,ny,bdx,bdy,tx,ty,tw,th)
+bx,by,bdx,bdy,tx,ty,tw,th)
 	
-	local slp=bdy/bdx --slope decl
-	local cx,cy --target corners
+	local bslp=bdy/bdx --ball slope
+	--corner slope
+	local csx, csy, cslp
 	
 	if bdx==0 then
 		--ball 100% vertial dir
@@ -229,48 +220,32 @@ nx,ny,bdx,bdy,tx,ty,tw,th)
 		return true
 		
 	--case 1:ball moving ⬇️➡️
-	elseif slp>0 and bdx>0 then
-		--cornerx=targetx-nextx
-		cx=tx-nx
-		--cornery=targety-nexty
-		cy=ty-ny
-		return cx>0 and cy/cx<=slp
-		--cy/cx=corner slope,a line
-		--between ball center and
-		--box closest corner
-		
-		--return true (horzntl) if
-		--		cornerx>0 (ball is at the
-		--  left of target corner)
-		--  and if
-		--  corner slope<ball slope
-		--else false (vertical defl)
-		
-		--first condition:need ball
-		--to be at the ⬅️ of corner
-		--for horzntl defl
-		
-		--2nd condition:need corner
-		--slope to be lower than
-		--ball slope for horzntl defl
+	elseif bslp>0 and bdx>0 then
+		csy=ty-by
+		csx=tx-bx
+		cslp=csy/csx
+		return csx>0 and cslp<=bslp
 		
 	--case 2:ball moving ⬆️➡️	
-	elseif slp<0 and bdx>0 then
-		cx=tx-nx
-		cy=ty+th-ny
-		return cx>0 and cy/cx>=slp
+	elseif bslp<0 and bdx>0 then
+		csy=ty+th-by
+		csx=tx-bx
+		cslp=csy/csx
+		return csx>0 and cslp>=bslp
 		
 	--case 3:ball moving ⬆️⬅️
-	elseif slp>0 and bdx<0 then
-		cx=tx+tw-nx
-		cy=ty+th-ny
-		return cx<0 and cy/cx<=slp
+	elseif bslp>0 and bdx<0 then
+		csy=ty+th-by
+		csx=tx+tw-bx
+		cslp=csy/csx
+		return csx<0 and cslp<=bslp
 		
 	--case 4: ball moving ⬇️⬅️
 	else
-		cx=tx+tw-nx --1
-		cy=ty-ny --2
-		return cx<0 and cy/cx>=slp
+		csy=ty-by
+		csx=tx+tw-bx
+		cslp=csy/csx
+		return csx<0 and cslp>=bslp
 	end
 end --ball_defl()
 __gfx__
@@ -282,3 +257,4 @@ __gfx__
 00700700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
 00010000115700e560095400351000500005000050000500005000050000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000100001a570155500f5300a51000500005000050000500005000050000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
