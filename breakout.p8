@@ -26,9 +26,15 @@ __lua__
 
 
 
+--###########################--
+--#     global functions    #--
+--###########################--
+
+
+--global init function
+
 function _init()
-	cls()
-	
+
 	--ball
 	ball_x_start=60
 	ball_dx_start=1
@@ -55,13 +61,11 @@ function _init()
 	pad_nohit=11--no hit color
 	pad_hit=8   --colision color
 	
-	--game mode
-	mode="start"
-	
 	--screen
 	screen_c=1
 	
 	--gameplay
+	mode="start"
 	lives_start=3
 	lives=3
 	score=0
@@ -69,21 +73,45 @@ end --_init()
 
 
 
------- functions update ------
-
-
+--global update function
 
 function _update60()
+
 	if mode=="game" then
 		update_game()
+		
 	elseif mode=="start" then
 		update_start()
+		
 	elseif mode=="gameover" then
 		update_gameover()
 	end
 end --_update60()
 
 
+
+--global draw function
+
+function _draw()
+	if mode=="game" then
+	draw_game()
+	
+	elseif mode=="start" then
+		draw_start()
+		
+	elseif mode=="gameover" then
+		draw_gameover()
+	end
+end --_draw
+
+
+
+--###########################--
+--#      state functions    #--
+--###########################--
+
+
+--"start" state functions
 
 function update_start()
 	if btn(❎) then
@@ -92,13 +120,26 @@ function update_start()
 end --update_start
 
 
-function update_gameover()
-	if btn(❎) then
-		startgame()
-	end
-end --update_gameover
+function draw_start()
+	local screen_w=128
+	local screen_h=128
+	
+	cls()
+	
+	--centered game title
+	print("pico breakout",
+	64-#"pico breakout"*2,
+	screen_h/2-10,7)
+	
+	--centered instructions
+	print("press ❎ to start",
+	64-#"press ❎ to start"*2,
+	screen_h/2+10,11)
+end --draw_start()
 
 
+
+--"game" state functions
 
 function update_game()
 	local buttpress=false
@@ -198,59 +239,6 @@ function update_game()
 end --update_game()
 
 
-
------- functions draw ------
-
-
-
-function _draw()
-	if mode=="game" then
-	draw_game()
-	elseif mode=="start" then
-		draw_start()
-	elseif mode=="gameover" then
-		draw_gameover()
-	end
-end --_draw
-
-
-
-function draw_start()
-	local screen_w=128
-	local screen_h=128
-	
-	cls()
-	
-	--centered game title
-	print("pico breakout",
-	64-#"pico breakout"*2,
-	screen_h/2-10,7)
-	
-	--centered instructions
-	print("press ❎ to start",
-	64-#"press ❎ to start"*2,
-	screen_h/2+10,11)
-end --draw_start()
-
-
-
-function draw_gameover()
-	local screen_w=128
-	local screen_h=128
-	
-	rectfill(0,60,128,74,0)
-	
-	print("game over",
-	64-#"game over"*2,62,7)
-	
-	print("press ❎ to restart",
-	64-#"press ❎ to restart"*2,
-	68,6)
-	
-end --draw_gameover()
-
-
-
 function draw_game()
 	cls(screen_c)
 	
@@ -273,7 +261,36 @@ end --draw_game()
 
 
 
------- functions ------
+--"game over" state functions
+
+function update_gameover()
+
+	if btn(❎) then
+		startgame()
+	end
+end --update_gameover
+
+
+function draw_gameover()
+
+	local screen_w=128
+	local screen_h=128
+	
+	rectfill(0,60,128,74,0)
+	
+	print("game over",
+	64-#"game over"*2,62,7)
+	
+	print("press ❎ to restart",
+	64-#"press ❎ to restart"*2,
+	68,6)
+end --draw_gameover()
+
+
+
+--###########################--
+--#        functions        #--
+--###########################--
 
 
 --start game
@@ -294,13 +311,6 @@ function serveball()
 	ball_y=ball_y_start
 	ball_dx=ball_dx_start
 	ball_dy=ball_dy_start
-end
-
-
-
---game over
-function gameover()
-	mode="gameover"
 end
 
 
@@ -387,6 +397,14 @@ bx,by,bdx,bdy,tx,ty,tw,th)
 		return csx<0 and cslp>=bslp
 	end
 end --ball_defl()
+
+
+
+--game over
+
+function gameover()
+	mode="gameover"
+end
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
