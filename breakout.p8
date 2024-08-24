@@ -1,20 +1,20 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
---next breakout #9
+--next breakout #10
 
 --goals
 -- 4.levels
---				generate level patterns
---				stage clearing
---	5.different bricks
---	6.powups
+--    generate level patterns
+--    stage clearing
+-- 5.different bricks
+-- 6.powups
 -- 7.juiciness
---				arrow anim
---				text blinking
---				particles
---				screenshakes
---	8.high score
+--    arrow anim
+--    text blinking
+--    particles
+--    screenshakes
+-- 8.high score
 
 --debug (end of course!)
 -- ◆never u-turn ball
@@ -30,34 +30,77 @@ function _init()
 	cls()
 	
 	--ball
+	ball_x_start=60
+	ball_dx_start=1
+	ball_y_start=10
+	ball_dy_start=1
+	
 	ball_x=60
-	ball_dx=1 --delta
+	ball_dx=1   --delta
 	ball_y=10
 	ball_dy=1
-	ball_r=2 			--radius
-	ball_c=9 			--color
+	ball_r=2    --radius
+	ball_c=9    --color
 	
 	--paddle
 	pad_x=52
 	pad_y=118
-	pad_dx=0 			--delta
-	pad_w=24 			--width
-	pad_h=3 				--height
-	pad_s=2 				--speed
-	pad_d=1.3 		--deceleration
-	pad_c=6 				--color
+	pad_dx=0    --delta
+	pad_w=24    --width
+	pad_h=3     --height
+	pad_s=2     --speed
+	pad_d=1.3   --deceleration
+	pad_c=6     --color
 	pad_nor=6   --normal color
 	pad_nohit=11--no hit color
-	pad_hit=8			--colision color
+	pad_hit=8   --colision color
+	
+	--game mode
+	mode="start"
 	
 	--screen
 	screen_c=1
 	
+	--gameplay
+	lives_start=3
+	lives=3
+	score=0
 end --_init()
 
 
 
+------ functions update ------
+
+
+
 function _update60()
+	if mode=="game" then
+		update_game()
+	elseif mode=="start" then
+		update_start()
+	elseif mode=="gameover" then
+		update_gameover()
+	end
+end --_update60()
+
+
+
+function update_start()
+	if btn(❎) then
+		startgame()
+	end
+end --update_start
+
+
+function update_gameover()
+	if btn(❎) then
+		startgame()
+	end
+end --update_gameover
+
+
+
+function update_game()
 	local buttpress=false
 	local nextx,nexty
 	
@@ -89,17 +132,28 @@ function _update60()
 	nexty=ball_y+ball_dy
 	
 	--ball horizontal boundaries
-	if nextx>125	or nextx<2 then
+	if nextx>125 or nextx<2 then
 		nextx=mid(0,nextx,127) --oos
 		ball_dx=-ball_dx --rev.hor
 		sfx(0)
 	end
 	
 	--ball vertical boundaries
-	if nexty>125	or nexty<2 then
+	if nexty<9 then
 	nexty=mid(0,nexty,127) --oos
 		ball_dy=-ball_dy --rev.vert
 		sfx(0)
+	end
+	
+	--ball lost ⬇️
+	if nexty>125 then
+		sfx(2)
+		lives-=1
+		if lives<0 then
+			gameover()
+		else
+			serveball()
+		end
 	end
 	
 	--ball/pad collision test
@@ -114,7 +168,7 @@ function _update60()
 		ball_x,ball_y,ball_dx,
 		ball_dy,pad_x,pad_y,
 		pad_w,pad_h) then
-		
+			
 			--ball_defl=true
 			--horizontal deflection
 			ball_dx=-ball_dx
@@ -134,17 +188,70 @@ function _update60()
 		end
 		
 		sfx(1)
+		score+=1
 		
 	end --if ball_col()
 	
-	--update ball position
+	--update game position
 	ball_x+=ball_dx
 	ball_y+=ball_dy
-end --_update60()
+end --update_game()
+
+
+
+------ functions draw ------
 
 
 
 function _draw()
+	if mode=="game" then
+	draw_game()
+	elseif mode=="start" then
+		draw_start()
+	elseif mode=="gameover" then
+		draw_gameover()
+	end
+end --_draw
+
+
+
+function draw_start()
+	local screen_w=128
+	local screen_h=128
+	
+	cls()
+	
+	--centered game title
+	print("pico breakout",
+	64-#"pico breakout"*2,
+	screen_h/2-10,7)
+	
+	--centered instructions
+	print("press ❎ to start",
+	64-#"press ❎ to start"*2,
+	screen_h/2+10,11)
+end --draw_start()
+
+
+
+function draw_gameover()
+	local screen_w=128
+	local screen_h=128
+	
+	rectfill(0,60,128,74,0)
+	
+	print("game over",
+	64-#"game over"*2,62,7)
+	
+	print("press ❎ to restart",
+	64-#"press ❎ to restart"*2,
+	68,6)
+	
+end --draw_gameover()
+
+
+
+function draw_game()
 	cls(screen_c)
 	
 	--ball draw
@@ -155,18 +262,50 @@ function _draw()
 	rectfill(
 	pad_x,pad_y,pad_x+pad_w,
 	pad_y+pad_h,pad_c)
-
-end --_draw
+	
+	--lives
+	rectfill(0,0,128,6,0)
+	print("lives: "..lives,1,1,7)
+	
+	--score
+	print("score: "..score,40,1,7)
+end --draw_game()
 
 
 
 ------ functions ------
 
 
+--start game
 
---check collision of the ball
---with a rectangle (box)
---by elimination
+function startgame()
+	mode="game"
+	lives=lives_start
+	score=0
+	serveball()
+end --startgame()
+
+
+
+--serve the ball
+
+function serveball()
+	ball_x=ball_x_start
+	ball_y=ball_y_start
+	ball_dx=ball_dx_start
+	ball_dy=ball_dy_start
+end
+
+
+
+--game over
+function gameover()
+	mode="gameover"
+end
+
+
+
+--ball collision
 
 --nx=nextx, ny=nexty, t=target
 function ball_col(
@@ -226,7 +365,7 @@ bx,by,bdx,bdy,tx,ty,tw,th)
 		cslp=csy/csx
 		return csx>0 and cslp<=bslp
 		
-	--case 2:ball moving ⬆️➡️	
+	--case 2:ball moving ⬆️➡️
 	elseif bslp<0 and bdx>0 then
 		csy=ty+th-by
 		csx=tx-bx
@@ -258,3 +397,4 @@ __gfx__
 __sfx__
 00010000115700e560095400351000500005000050000500005000050000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000100001a570155500f5300a51000500005000050000500005000050000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000500001b7501875015750127500f7500d7500a75008750057500275000750007000070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
