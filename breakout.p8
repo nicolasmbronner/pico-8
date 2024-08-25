@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
---next breakout #10
+--next breakout #10 17:09
 
 --goals
 -- 4.levels
@@ -60,6 +60,13 @@ function _init()
 	pad_nor=6   --normal color
 	pad_nohit=11--no hit color
 	pad_hit=8   --colision color
+	
+	--brick
+	brick_x=5
+	brick_y=20
+	brick_w=10
+	brick_h=4
+	brick_v=true
 	
 	--screen
 	screen_c=1
@@ -225,13 +232,40 @@ function update_game()
 			
 			--safe teleport ball
 			ball_y=pad_y-ball_r
-			
 		end
 		
 		sfx(1)
 		score+=1
+	end --if ball-pad.col
+	
+	
+	--ball/brick collision test
+	if brick_v and ball_col(
+	nextx,nexty,brick_x,brick_y,
+	brick_w,brick_h) then
+	
+		--deal with deflection
+		if ball_defl(
+		ball_x,ball_y,ball_dx,
+		ball_dy,brick_x,brick_y,
+		brick_w,brick_h) then
+			
+			--ball_defl=true
+			--horizontal deflection
+			ball_dx=-ball_dx
+			ball_dy=-ball_dy
+		else
+			
+			--ball_defl=false
+			--vertical deflection
+			ball_dy=-ball_dy			
+		end
 		
-	end --if ball_col()
+		sfx(3)
+		brick_v=false
+		score+=10
+	end --if ball-brick.col
+	
 	
 	--update game position
 	ball_x+=ball_dx
@@ -250,6 +284,13 @@ function draw_game()
 	rectfill(
 	pad_x,pad_y,pad_x+pad_w,
 	pad_y+pad_h,pad_c)
+	
+	--bricks draw
+	if brick_v then
+		rectfill(brick_x,brick_y,
+		brick_x+brick_w,
+		brick_y+brick_h,14)
+	end
 	
 	--lives
 	rectfill(0,0,128,6,0)
@@ -289,7 +330,7 @@ end --draw_gameover()
 
 
 --###########################--
---#        functions        #--
+--#   utilitary functions   #--
 --###########################--
 
 
@@ -416,3 +457,4 @@ __sfx__
 00010000115700e560095400351000500005000050000500005000050000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000100001a570155500f5300a51000500005000050000500005000050000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000500001b7501875015750127500f7500d7500a75008750057500275000750007000070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000200001d7102e7302e720357102e700357002c700247001c00024700247001500014000130000d0000f00000000000000000000000000000000000000000000000000000000000000000000000000000000000
