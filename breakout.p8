@@ -21,6 +21,32 @@ __lua__
 -- ◆never multi-break 1 frame
 -- ◆not through both bricks
 
+-- possible solution:
+-- 1.test for collision (ok)
+-- 2.test for deflection (ok)
+-- 3.if true (horizontal defl)
+--   test ball_x direction
+--   test brick presence in
+--   opposite x direction of
+--   hit brick opposed to 
+--   ball_x direction
+--   if brick presence,
+--   differed defl (vertical)
+-- 4.else (vertical)
+--   test ball_y direction
+--   test brick presence in
+--   opposite y direction of
+--   hit brick opposed to
+--   ball_y direction
+--   if brick presence,
+--   differed defl (horizontal)
+-- 5.if brick collision, make
+--   a bool true for the rest
+--   of the frame, which stops
+--   further collision tests,
+--   so only 1 collision
+--   per frame
+
 --art
 -- ◆theme:steampunk
 
