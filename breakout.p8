@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
---next breakout #10 17:09
+--next breakout #11
 
 --goals
 -- 4.levels
@@ -21,31 +21,7 @@ __lua__
 -- ◆never multi-break 1 frame
 -- ◆not through both bricks
 
--- possible solution:
--- 1.test for collision (ok)
--- 2.test for deflection (ok)
--- 3.if true (horizontal defl)
---   test ball_x direction
---   test brick presence in
---   opposite x direction of
---   hit brick opposed to 
---   ball_x direction
---   if brick presence,
---   differed defl (vertical)
--- 4.else (vertical)
---   test ball_y direction
---   test brick presence in
---   opposite y direction of
---   hit brick opposed to
---   ball_y direction
---   if brick presence,
---   differed defl (horizontal)
--- 5.if brick collision, make
---   a bool true for the rest
---   of the frame, which stops
---   further collision tests,
---   so only 1 collision
---   per frame
+-- possible solution: 1.test for collision (ok) | 2.test for deflection (ok) | 3.if true (horizontal defl),test ball_x direction,test brick presence in opposite x direction of hit brick opposed to ball_x direction.if brick presence:differed defl (vertical),else (vertical).test ball_y direction,test brick presence in opposite y direction of hit brick opposed to ball_y direction.if brick presence,differed defl (horizontal) | 5.if brick collision, make a bool true for the rest of the frame,which stops further collision tests,so only 1 collision per frame
 
 --art
 -- ◆theme:steampunk
@@ -88,11 +64,11 @@ function _init()
 	pad_hit=8   --colision color
 	
 	--brick
-	brick_x=5
-	brick_y=20
+	brick_x={}
+	brick_y={}
+	brick_v={}
 	brick_w=10
 	brick_h=4
-	brick_v=true
 	
 	--screen
 	screen_c=1
@@ -102,6 +78,9 @@ function _init()
 	lives_start=3
 	lives=3
 	score=0
+	
+	--functions
+	buildbricks()
 end --_init()
 
 
@@ -263,34 +242,38 @@ function update_game()
 		sfx(1)
 		score+=1
 	end --if ball-pad.col
-	
-	
-	--ball/brick collision test
-	if brick_v and ball_col(
-	nextx,nexty,brick_x,brick_y,
-	brick_w,brick_h) then
-	
-		--deal with deflection
-		if ball_defl(
-		ball_x,ball_y,ball_dx,
-		ball_dy,brick_x,brick_y,
-		brick_w,brick_h) then
+
+
+		--ball/brick collision test
+		for i=1,#brick_x do
+
+			if brick_v[i] and ball_col(
+			nextx,nexty,brick_x[i],
+			brick_y[i],brick_w,
+			brick_h) then
 			
-			--ball_defl=true
-			--horizontal deflection
-			ball_dx=-ball_dx
-			ball_dy=-ball_dy
-		else
-			
-			--ball_defl=false
-			--vertical deflection
-			ball_dy=-ball_dy			
+				--deal with deflection
+				if ball_defl(
+				ball_x,ball_y,ball_dx,
+				ball_dy,brick_x[i],
+				brick_y[i],brick_w,
+				brick_h) then
+					
+					--ball_defl=true
+					--horizontal deflection
+					ball_dx=-ball_dx
+				else
+					
+					--ball_defl=false
+					--vertical deflection
+					ball_dy=-ball_dy			
+				end
+				
+				sfx(3)
+				brick_v[i]=false
+				score+=10
+			end --if ball-brick.col
 		end
-		
-		sfx(3)
-		brick_v=false
-		score+=10
-	end --if ball-brick.col
 	
 	
 	--update game position
@@ -300,6 +283,7 @@ end --update_game()
 
 
 function draw_game()
+	local i
 	cls(screen_c)
 	
 	--ball draw
@@ -312,10 +296,13 @@ function draw_game()
 	pad_y+pad_h,pad_c)
 	
 	--bricks draw
-	if brick_v then
-		rectfill(brick_x,brick_y,
-		brick_x+brick_w,
-		brick_y+brick_h,14)
+	for i=1,#brick_x do
+		if brick_v[i] then
+			rectfill(brick_x[i],
+			brick_y[i],
+			brick_x[i]+brick_w,
+			brick_y[i]+brick_h,14)
+		end
 	end
 	
 	--lives
@@ -378,6 +365,20 @@ function serveball()
 	ball_y=ball_y_start
 	ball_dx=ball_dx_start
 	ball_dy=ball_dy_start
+end
+
+
+
+--build the bricks
+
+function buildbricks()
+	local i
+	for i=1,10 do
+		add(brick_x,5+(i-1)*
+		(brick_w+2))
+		add(brick_y,20)
+		add(brick_v,true)
+	end
 end
 
 
