@@ -78,6 +78,7 @@ function _init()
 	lives_start=3
 	lives=3
 	score=0
+	collided=false
 	
 	--functions
 	buildbricks()
@@ -245,9 +246,12 @@ function update_game()
 
 
 		--ball/brick collision test
+		collided = false
+		
 		for i=1,#brick_x do
 
-			if brick_v[i] and ball_col(
+			if brick_v[i] and not 
+			collided and ball_col(
 			nextx,nexty,brick_x[i],
 			brick_y[i],brick_w,
 			brick_h) then
@@ -271,6 +275,7 @@ function update_game()
 				
 				sfx(3)
 				brick_v[i]=false
+				collided=true
 				score+=10
 			end --if ball-brick.col
 		end
