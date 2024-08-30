@@ -21,7 +21,7 @@ __lua__
 -- ◆never multi-break 1 frame
 -- ◆not through both bricks
 
--- possible solution: 1.test for collision (ok) | 2.test for deflection (ok) | 3.if true (horizontal defl),test ball_x direction,test brick presence in opposite x direction of hit brick opposed to ball_x direction.if brick presence:differed defl (vertical),else (vertical).test ball_y direction,test brick presence in opposite y direction of hit brick opposed to ball_y direction.if brick presence,differed defl (horizontal) | 5.if brick collision, make a bool true for the rest of the frame,which stops further collision tests,so only 1 collision per frame
+--solution: 1.test for collision (ok) | 2.test for deflection (ok) | 3.if true (horizontal defl),test ball_x direction,test brick presence in opposite x direction of hit brick opposed to ball_x direction.if brick presence:differed defl (vertical),else (vertical).test ball_y direction,test brick presence in opposite y direction of hit brick opposed to ball_y direction.if brick presence,differed defl (horizontal) | 5.if brick collision, make a bool true for the rest of the frame,which stops further collision tests,so only 1 collision per frame
 
 --art
 -- ◆theme:steampunk
@@ -38,14 +38,14 @@ __lua__
 function _init()
 
 	--ball
-	ball_x_start=60
+	ball_x_start=10
 	ball_dx_start=1
-	ball_y_start=10
+	ball_y_start=40
 	ball_dy_start=1
 	
 	ball_x=60
 	ball_dx=1   --delta
-	ball_y=10
+	ball_y=7
 	ball_dy=1
 	ball_r=2    --radius
 	ball_c=9    --color
@@ -67,7 +67,7 @@ function _init()
 	brick_x={}
 	brick_y={}
 	brick_v={}
-	brick_w=10
+	brick_w=9
 	brick_h=4
 	
 	--screen
@@ -131,6 +131,7 @@ function update_start()
 		startgame()
 	end
 end --update_start
+
 
 
 function draw_start()
@@ -287,6 +288,7 @@ function update_game()
 end --update_game()
 
 
+
 function draw_game()
 	local i
 	cls(screen_c)
@@ -328,6 +330,7 @@ function update_gameover()
 		startgame()
 	end
 end --update_gameover
+
 
 
 function draw_gameover()
@@ -378,10 +381,14 @@ end
 
 function buildbricks()
 	local i
-	for i=1,10 do
-		add(brick_x,5+(i-1)*
+	for i=1,22 do
+	
+		add(brick_x,4+((i-1)%11)*
 		(brick_w+2))
-		add(brick_y,20)
+		
+		add(brick_y,20+flr(i/12)*
+		(brick_h+2))
+		
 		add(brick_v,true)
 	end
 end
