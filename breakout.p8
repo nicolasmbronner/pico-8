@@ -1,23 +1,30 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
---next breakout #12
+--[[
+next breakout #12
 
---goals
--- 4.levels
---    generate level patterns
---    stage clearing
--- 5.different bricks
--- 6.powups
--- 7.juiciness
---    arrow anim
---    text blinking
---    particles
---    screenshakes
--- 8.high score
+goals
 
---art
--- ◆theme:steampunk
+1.sticky paddle
+2.angle control
+3.combos
+4.levels
+			-generate level patterns
+			-stage clearing
+5.different bricks
+6.powups
+7.juiciness
+   -arrow anim
+   -text blinking
+   -particles
+   -screenshakes
+8.high score
+
+
+art
+
+◆theme:steampunk ]]
 
 
 
