@@ -33,7 +33,7 @@ function _init()
 	--ball
 	ball_x_start=10
 	ball_dx_start=1
-	ball_y_start=10
+	ball_y_start=60
 	ball_dy_start=1
 	
 	ball_x=60
@@ -72,6 +72,9 @@ function _init()
 	lives=3
 	score=0
 	collided=false
+	
+	--debug
+	god_mode=false
 	
 	--functions
 	buildbricks()
@@ -153,13 +156,17 @@ function update_game()
 	local nextx,nexty
 	
 	--move paddle left with btn
-	if btn(⬅️) then
+	if btn(⬅️) and not 
+	god_mode then
+	
 		pad_dx=-pad_s
 		buttpress=true
 	end
 	
 	--move paddle right with btn
-	if btn(➡️) then 
+	if btn(➡️) and not
+	god_mode then 
+	
 		pad_dx=pad_s
 		buttpress=true
 	end
@@ -171,6 +178,22 @@ function update_game()
 	
 	--update pad position if ⬅️/➡️
 	pad_x+=pad_dx
+	
+	--god mode
+	if btnp(⬆️) and not
+	god_mode then
+	
+		god_mode=true
+		
+	elseif btnp(⬆️) and
+	god_mode then
+	
+		god_mode=false
+	end
+	
+	if god_mode then
+		pad_x=ball_x-(pad_w/2)
+	end
 	
 	--prevent pad go ooscreen
 	pad_x=mid(0,pad_x,127-pad_w)
@@ -239,7 +262,9 @@ function update_game()
 	end --if ball-pad.col
 
 
+
 	--ball/brick collision test
+	
 	collided = false
 		
 	for i=1,#brick_x do
@@ -284,13 +309,10 @@ function update_game()
    --apply modif defl
    if adj_brick then
     if is_horizontal then
-    
-     --change to vert defl
-     ball_dy=-ball_dy
-     
+         
     	--adjust y ball pos
     	--ball goes ⬆️
-     if ball_dy>0 then
+     if ball_dy<0 then
       ball_y=brick_y[i]+
       brick_h+ball_r
       
@@ -299,22 +321,27 @@ function update_game()
       ball_r
      end
      
-    else
-     --change to horiz defl
-     ball_dx=-ball_dx
+    --change to vert defl
+    ball_dy=-ball_dy
      
+    else
+         
      --adjust x ball pos
+					--ball goes to ➡️
      if ball_dx>0 then
-     	--ball goes to ➡️
       ball_x=brick_x[i]-ball_r
       
-     else --ball goes to ⬅️  
+     else --ball goes to ⬅️ 
       ball_x=brick_x[i]+
       brick_w+ball_r
      end
+    
+    --change to horiz defl
+   	ball_dx=-ball_dx
     end
     
    else
+   
     --normal defl
     if is_horizontal then
      ball_dx=-ball_dx
@@ -369,6 +396,10 @@ function draw_game()
 	
 	--score
 	print("score: "..score,40,1,7)
+	
+	--debug
+	print("god(⬆️):"
+	..tostr(god_mode),1,8,13)
 end --draw_game()
 
 
@@ -530,14 +561,17 @@ bx,by,bdx,bdy,tx,ty,tw,th)
 end --ball_defl()
 
 
+
 --check adjacent brick
 
 function check_adj_brick(
 i,direction)
-
+	
+	--setup adj brick part 1
 	local adj_x,adj_y=
 	brick_x[i],brick_y[i]
 	
+	--setup adj brick part 2
  if direction=="up" then
   adj_y-=brick_h+2
   
@@ -545,12 +579,13 @@ i,direction)
   adj_y+=brick_h+2
   
  elseif direction=="left" then
-  adj_x -= brick_w + 2
+  adj_x-=brick_w+2
  
  elseif direction=="right"then
-  adj_x += brick_w + 2
+  adj_x+=brick_w+2
  end
-    
+ 
+ --compare with all bricks 
  for j=1, #brick_x do
   if brick_v[j] and
   brick_x[j]==adj_x and
