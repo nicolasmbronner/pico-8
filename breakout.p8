@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
---next breakout #11
+--next breakout #12
 
 --goals
 -- 4.levels
@@ -15,13 +15,6 @@ __lua__
 --    particles
 --    screenshakes
 -- 8.high score
-
---debug (end of course!)
--- ◆never u-turn ball
--- ◆never multi-break 1 frame
--- ◆not through both bricks
-
---solution: 1.test for collision (ok) | 2.test for deflection (ok) | 3.if true (horizontal defl),test ball_x direction,test brick presence in opposite x direction of hit brick opposed to ball_x direction.if brick presence:differed defl (vertical),else (vertical).test ball_y direction,test brick presence in opposite y direction of hit brick opposed to ball_y direction.if brick presence,differed defl (horizontal) | 5.if brick collision, make a bool true for the rest of the frame,which stops further collision tests,so only 1 collision per frame
 
 --art
 -- ◆theme:steampunk
@@ -40,7 +33,7 @@ function _init()
 	--ball
 	ball_x_start=10
 	ball_dx_start=1
-	ball_y_start=40
+	ball_y_start=10
 	ball_dy_start=1
 	
 	ball_x=60
@@ -246,40 +239,98 @@ function update_game()
 	end --if ball-pad.col
 
 
-		--ball/brick collision test
-		collided = false
+	--ball/brick collision test
+	collided = false
 		
-		for i=1,#brick_x do
+	for i=1,#brick_x do
+	
+  if brick_v[i] and not 
+  collided and
+  ball_col(nextx,nexty,
+  brick_x[i],brick_y[i],
+  brick_w,brick_h) then
+  
+   local is_horizontal=
+   ball_defl(ball_x,ball_y,
+   ball_dx,ball_dy,brick_x[i],
+   brick_y[i],brick_w,brick_h)
+   
+   local adj_brick=false
+   local adj_direction=""
+        
+   --determine col direction
+   if is_horizontal then
+   
+   	if ball_dx>0 then
+   		adj_direction="left"
+   		
+   	else adj_direction="right"
+   	end
+   	
+   else
+   	if ball_dy>0 then 
+     adj_direction="up"
+     
+    else 
+    	adj_direction = "down"
+    end
+   end
+        
+   --check adj brick
+   adj_brick=
+   check_adj_brick(i,
+   adj_direction)
+        
+   --apply modif defl
+   if adj_brick then
+    if is_horizontal then
+    
+     --change to vert defl
+     ball_dy=-ball_dy
+     
+    	--adjust y ball pos
+    	--ball goes ⬆️
+     if ball_dy>0 then
+      ball_y=brick_y[i]+
+      brick_h+ball_r
+      
+     else  --ball goes ⬇️
+      ball_y=brick_y[i]-
+      ball_r
+     end
+     
+    else
+     --change to horiz defl
+     ball_dx=-ball_dx
+     
+     --adjust x ball pos
+     if ball_dx>0 then
+     	--ball goes to ➡️
+      ball_x=brick_x[i]-ball_r
+      
+     else --ball goes to ⬅️  
+      ball_x=brick_x[i]+
+      brick_w+ball_r
+     end
+    end
+    
+   else
+    --normal defl
+    if is_horizontal then
+     ball_dx=-ball_dx
+     
+   	else
+   		ball_dy=-ball_dy
+   	end
+   end
+   
+   sfx(3)
+   brick_v[i] = false
+   collided = true
+   score += 10
+  end
+ end
 
-			if brick_v[i] and not 
-			collided and ball_col(
-			nextx,nexty,brick_x[i],
-			brick_y[i],brick_w,
-			brick_h) then
-			
-				--deal with deflection
-				if ball_defl(
-				ball_x,ball_y,ball_dx,
-				ball_dy,brick_x[i],
-				brick_y[i],brick_w,
-				brick_h) then
-					
-					--ball_defl=true
-					--horizontal deflection
-					ball_dx=-ball_dx
-				else
-					
-					--ball_defl=false
-					--vertical deflection
-					ball_dy=-ball_dy			
-				end
-				
-				sfx(3)
-				brick_v[i]=false
-				collided=true
-				score+=10
-			end --if ball-brick.col
-		end
 	
 	
 	--update game position
@@ -381,12 +432,12 @@ end
 
 function buildbricks()
 	local i
-	for i=1,22 do
+	for i=1,66 do
 	
 		add(brick_x,4+((i-1)%11)*
 		(brick_w+2))
 		
-		add(brick_y,20+flr(i/12)*
+		add(brick_y,20+flr((i-1)/11)*
 		(brick_h+2))
 		
 		add(brick_v,true)
@@ -478,6 +529,38 @@ bx,by,bdx,bdy,tx,ty,tw,th)
 	end
 end --ball_defl()
 
+
+--check adjacent brick
+
+function check_adj_brick(
+i,direction)
+
+	local adj_x,adj_y=
+	brick_x[i],brick_y[i]
+	
+ if direction=="up" then
+  adj_y-=brick_h+2
+  
+ elseif direction=="down"then
+  adj_y+=brick_h+2
+  
+ elseif direction=="left" then
+  adj_x -= brick_w + 2
+ 
+ elseif direction=="right"then
+  adj_x += brick_w + 2
+ end
+    
+ for j=1, #brick_x do
+  if brick_v[j] and
+  brick_x[j]==adj_x and
+  brick_y[j]==adj_y then
+		 return true
+  end
+ end
+ 
+ return false
+end
 
 
 --game over
