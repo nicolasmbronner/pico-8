@@ -52,7 +52,7 @@ function _init()
 	--paddle
 	pad_x,pad_y,pad_dx,pad_w,
 	pad_h,pad_s,pad_d,pad_c=
-	52,118,0,25,3,2,1.3,6
+	52,118,0,24,3,2,1.3,6
 	
 	
 	--brick
@@ -188,12 +188,12 @@ function update_game()
 	
 	--prevent pad go ooscreen
 	pad_x=mid(0,pad_x,127-pad_w)
-
+	
 	--sticky ball
 	if sticky then
 		ball_x=pad_x+flr(pad_w/2)
-		ball_y=pad_y-ball_r
-
+		ball_y=(pad_y-ball_r-1)
+	
 	--regular ball physics
 	else
 		--ball horizontal boundaries
@@ -327,8 +327,10 @@ function update_game()
 	
 	
 	--update game position
-	ball_x+=ball_dx
-	ball_y+=ball_dy
+	if not sticky then
+		ball_x+=ball_dx
+		ball_y+=ball_dy
+	end
 end --update_game()
 
 
@@ -415,7 +417,7 @@ end --startgame()
 
 function serveball()
 	ball_x=pad_x+flr(pad_w/2)
-	ball_y=pad_y-ball_r
+	ball_y=pad_y-ball_r-1
 	ball_dx=1
 	ball_dy=-1
 	sticky=true
