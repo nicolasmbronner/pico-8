@@ -1,32 +1,23 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
---[[ next #14 angle control
+--[[ next #16
 
 
 goals
 
-1.sticky paddle
-2.angle control
-3.combos
-
 4.levels
-   -generate level patterns
-   -stage clearing
-   
+  generate level patterns
+  stage clearing
 5.different bricks
 6.powups
-
 7.juiciness
-   -arrow anim (serve preview)
-   -text blinking
-   -particles
-   -screenshakes
-   
+  arrow anim (serve preview)
+  text blinking
+  particles
+  screenshakes
 8.high score
-
-
-◆theme:steampunk ]]
+9.steampunk theme ]]
 
 
 
@@ -42,34 +33,36 @@ goals
 
 function _init()
 	
-	--ball_x,ball_y,
-	--ball_dx,ball_dy=
+	--bx,by,
+	--bdx,bdy=
 	--serveball()
 	
-	ball_r,ball_c=2,9
+	br,bc=2,9
 	
 	
 	--paddle
-	pad_x,pad_y,pad_dx,pad_w,
-	pad_h,pad_s,pad_d,pad_c=
+	px,py,pdx,pw,
+	ph,ps,pd,pc=
 	52,118,0,24,3,2,1.3,6
 	
 	
 	--brick
-	brick_x,brick_y,brick_v,
-	brick_w,brick_h=
+	brickx,bricky,brickv,
+	brickw,brickh=
 	{},{},{},9,4
 	
 	
 	--gameplay
 	mode,lives_start,
-	lives,score,collided,god_mode=
+	lives,score,collided,
+	god_mode=
 	"start",3,3,0,false,false
 	
 	--sticky=serveball()
+	--combo =serveball()
 	
 	--functions
-	buildbricks()
+	mode="start"
 end --_init()
 
 
@@ -144,24 +137,24 @@ function update_game()
 	local nextx,nexty
 	
 	--predict next ball pos
-	nextx=ball_x+ball_dx
-	nexty=ball_y+ball_dy
+	nextx=bx+bdx
+	nexty=by+bdy
 	
 	--move paddle left with btn
 	if btn(⬅️) and not god_mode then
-		pad_dx=-pad_s
+		pdx=-ps
 		buttpress=true
 		if sticky then
-			ball_dx=-1
+			bdx=-1
 		end
 	end
 	
 	--move paddle right with btn
 	if btn(➡️) and not god_mode then 
-		pad_dx=pad_s
+		pdx=ps
 		buttpress=true
 		if sticky then
-			ball_dx=1
+			bdx=1
 		end
 	end
 	
@@ -171,11 +164,11 @@ function update_game()
 	
 	--paddle deceleration
 	if not(buttpress) then
-		pad_dx/=pad_d
+		pdx/=pd
 	end
 	
 	--update pad position if ⬅️/➡️
-	pad_x+=pad_dx
+	px+=pdx
 	
 	--god mode
 	if btnp(⬆️) then
@@ -183,30 +176,30 @@ function update_game()
 	end
 	
 	if god_mode then
-		pad_x=nextx-(pad_w/2)
+		px=nextx-(pw/2)
 	end
 	
 	--prevent pad go ooscreen
-	pad_x=mid(0,pad_x,127-pad_w)
+	px=mid(0,px,127-pw)
 	
 	--sticky ball
 	if sticky then
-		ball_x=pad_x+flr(pad_w/2)
-		ball_y=(pad_y-ball_r-1)
+		bx=px+flr(pw/2)
+		by=(py-br-1)
 	
 	--regular ball physics
 	else
 		--ball horizontal boundaries
 		if nextx>125 or nextx<2 then
 			nextx=mid(0,nextx,127) --oos
-			ball_dx=-ball_dx --rev.hor
+			bdx=-bdx --rev.hor
 			sfx(0)
 		end
 		
 		--ball vertical boundaries
 		if nexty<9 then
 		nexty=mid(0,nexty,127) --oos
-			ball_dy=-ball_dy --rev.vert
+			bdy=-bdy --rev.vert
 			sfx(0)
 		end
 		
@@ -222,24 +215,40 @@ function update_game()
 		end
 		
 		--ball/pad collision test
-		if ball_col(nextx,nexty,pad_x,pad_y,pad_w,pad_h) then
+		if ball_col(nextx,nexty,px,py,pw,ph) then
 			
 			--deal with deflection
-			if ball_defl(ball_x,ball_y,ball_dx,ball_dy,pad_x,pad_y,pad_w,pad_h) then
+			if ball_defl(bx,by,bdx,bdy,px,py,pw,ph) then
 				
 				--ball_defl=true,hor defl
-				ball_dx=-ball_dx
-				ball_dy=-ball_dy
-				ball_y=pad_y-ball_r --safe teleport
+				bdx=-bdx
+				bdy=-bdy
+				by=py-br-1 --safe teleport
 			else
 				
 				--ball_defl=false,vert defl
-				ball_dy=-ball_dy
-				ball_y=pad_y-ball_r --safe teleport
+				bdy=-bdy
+				by=py-br-1 --safe teleport
+				
+				if abs(pdx)>1.8 then
+					-- change angle
+					if sign(pdx)==sign(bdx) then
+						--flatten angle
+						setang(mid(0,bang-1,2))
+					else
+						--raised angle
+						if bang==2 then
+							--reverse direction
+							bdx=-bdx
+						else
+						setang(mid(0,bang+1,2))
+						end
+					end
+				end
 			end
 			
 			sfx(1)
-			score+=1
+			combo=1
 		end --if ball-pad.col
 		
 		
@@ -247,30 +256,30 @@ function update_game()
 		
 		collided = false
 		
-		for i=1,#brick_x do
+		for i=1,#brickx do
 			
-			if brick_v[i]
+			if brickv[i]
 				and not collided
-				and ball_col(nextx,nexty,brick_x[i],brick_y[i],brick_w,brick_h) then
+				and ball_col(nextx,nexty,brickx[i],bricky[i],brickw,brickh) then
 				
-				local is_hor=ball_defl(ball_x,ball_y,ball_dx,ball_dy,brick_x[i],brick_y[i],brick_w,brick_h)
+				local is_hor=ball_defl(bx,by,bdx,bdy,brickx[i],bricky[i],brickw,brickh)
 				local adj_brick=false
 				local adj_direction=""
 					
 				--determine col direction
 				if is_hor then
 					
-					if ball_dx>0 then
+					if bdx>0 then
 						adj_direction="left"
 						
 					else adj_direction="right" end
 					
 				else
-					if ball_dy>0 then 
+					if bdy>0 then 
 						adj_direction="up"
 						
 					else 
-						adj_direction = "down"
+						adj_direction="down"
 					end
 				end
 					
@@ -283,43 +292,45 @@ function update_game()
 							
 						--adjust y ball pos
 						--ball goes ⬆️
-						if ball_dy<0 then
-							ball_y=brick_y[i]+brick_h+ball_r
+						if bdy<0 then
+							by=bricky[i]+brickh+br
 						else  --ball goes ⬇️
-							ball_y=brick_y[i]-ball_r
+							by=bricky[i]-br
 						end
 						
 						--change to vert defl
-						ball_dy=-ball_dy
+						bdy=-bdy
 					else
 						
 						--adjust x ball pos
 						--ball goes to ➡️
-						if ball_dx>0 then
-							ball_x=brick_x[i]-ball_r
+						if bdx>0 then
+							bx=brickx[i]-br
 							
 						else --ball goes to ⬅️ 
-							ball_x=brick_x[i]+brick_w+ball_r
+							bx=brickx[i]+brickw+br
 						end
 						
 						--change to horiz defl
-						ball_dx=-ball_dx
+						bdx=-bdx
 					end
 				else
 					
 					--normal defl
 					if is_hor then
-						ball_dx=-ball_dx
+						bdx=-bdx
 						
 					else
-						ball_dy=-ball_dy
+						bdy=-bdy
 					end
 				end
 				
-				sfx(3)
-				brick_v[i] = false
-				collided = true
-				score += 10
+				sfx(2+combo)
+				brickv[i]=false
+				collided=true
+				score+=10*combo
+				combo+=1
+				combo=mid(1,combo,7)
 			end
 		end
 	end
@@ -328,8 +339,8 @@ function update_game()
 	
 	--update game position
 	if not sticky then
-		ball_x+=ball_dx
-		ball_y+=ball_dy
+		bx+=bdx
+		by+=bdy
 	end
 end --update_game()
 
@@ -340,20 +351,20 @@ function draw_game()
 	cls(1)
 	
 	--ball draw
-	circfill(ball_x,ball_y,ball_r,ball_c)
+	circfill(bx,by,br,bc)
 	if sticky then
 		
 		--serve preview
-		line(ball_x+ball_dx*4,ball_y+ball_dy*4,ball_x+ball_dx*7,ball_y+ball_dy*7,13)
+		line(bx+bdx*4,by+bdy*4,bx+bdx*7,by+bdy*7,13)
 	end
 	
 	--paddle draw     
-	rectfill(pad_x,pad_y,pad_x+pad_w,pad_y+pad_h,pad_c)
+	rectfill(px,py,px+pw,py+ph,pc)
 	
 	--bricks draw
-	for i=1,#brick_x do
-		if brick_v[i] then
-			rectfill(brick_x[i],brick_y[i],brick_x[i]+brick_w,brick_y[i]+brick_h,14)
+	for i=1,#brickx do
+		if brickv[i] then
+			rectfill(brickx[i],bricky[i],brickx[i]+brickw,bricky[i]+brickh,14)
 		end
 	end
 	
@@ -363,6 +374,9 @@ function draw_game()
 	
 	--score
 	print("score: "..score,40,1,7)
+	
+	--combo
+	print("combo: "..combo.."x",90,1,7)
 	
 	--debug
 	print("god(⬆️):"..tostr(god_mode),1,8,13)
@@ -385,9 +399,6 @@ end --update_gameover
 
 function draw_gameover()
 	
-	local screen_w=128
-	local screen_h=128
-	
 	rectfill(0,60,128,74,0)
 	
 	print("game over",47,62,7)
@@ -408,6 +419,7 @@ function startgame()
 	mode="game"
 	lives=lives_start
 	score=0
+	buildbricks()
 	serveball()
 end --startgame()
 
@@ -416,11 +428,47 @@ end --startgame()
 --serve the ball
 
 function serveball()
-	ball_x=pad_x+flr(pad_w/2)
-	ball_y=pad_y-ball_r-1
-	ball_dx=1
-	ball_dy=-1
+	bx=px+flr(pw/2)
+	by=py-br-1
+	bdx=1
+	bdy=-1
+	bang=1
+	
 	sticky=true
+	combo=1
+	
+	--0.5
+	--1
+	--1.30
+end
+
+
+
+function setang(ang)
+	bang=ang
+	if ang==2 then
+		bdx=0.50*sign(bdx)
+		bdy=1.30*sign(bdy)
+	elseif ang==0 then
+		bdx=1.30*sign(bdx)
+		bdy=0.50*sign(bdy)
+		
+	else
+		bdx=1*sign(bdx)
+		bdy=1*sign(bdy)
+	end
+end
+
+
+
+function sign(n)
+	if n<0 then
+		return -1
+	elseif n>0 then
+		return 1
+	else
+		return 0
+	end
 end
 
 
@@ -431,11 +479,11 @@ function buildbricks()
 	local i
 	for i=1,66 do
 		
-		add(brick_x,4+((i-1)%11)*(brick_w+2))
+		add(brickx,4+((i-1)%11)*(brickw+2))
 		
-		add(brick_y,20+flr((i-1)/11)*(brick_h+2))
+		add(bricky,20+flr((i-1)/11)*(brickh+2))
 		
-		add(brick_v,true)
+		add(brickv,true)
 	end
 end
 
@@ -447,16 +495,16 @@ end
 function ball_col(nx,ny,tx,ty,tw,th)
 
 	--is ball bellow box?
-	if ny-ball_r>ty+th then return false end --yes, no col
+	if ny-br>ty+th then return false end --yes, no col
 	
 	--is ball above box?
-	if ny+ball_r<ty then return false end --yes, no col
+	if ny+br<ty then return false end --yes, no col
 	
 	--is ball at the ⬅️ of box?
-	if nx-ball_r>tx+tw then return false end --yes, no col
+	if nx-br>tx+tw then return false end --yes, no col
 	
 	--is ball at the ➡️ of box?
-	if nx+ball_r<tx then return false end --yes, no col
+	if nx+br<tx then return false end --yes, no col
 	
 	--if nothing else, ball is
 	--colliding with box
@@ -467,48 +515,48 @@ end --ball_col()
 
 --ball deflection
 
-function ball_defl(bx,by,bdx,bdy,tx,ty,tw,th)
+function ball_defl(ballx,bally,balldx,balldy,tx,ty,tw,th)
 	
 	--ball slope
-	local bslp=bdy/bdx
+	local bslp=balldy/balldx
 	--corner slope
 	local csx, csy, cslp
 	
-	if bdx==0 then
+	if balldx==0 then
 		--ball 100% vertial dir
 		--vertical deflection
 		return false
 		
-	elseif bdy==0 then
+	elseif balldy==0 then
 		--ball 100% horizontal dir
 		--horizontal deflection
 		return true
 		
 	--case 1:ball moving ⬇️➡️
-	elseif bslp>0 and bdx>0 then
-		csy=ty-by
-		csx=tx-bx
+	elseif bslp>0 and balldx>0 then
+		csy=ty-bally
+		csx=tx-ballx
 		cslp=csy/csx
 		return csx>0 and cslp<=bslp
 		
 	--case 2:ball moving ⬆️➡️
-	elseif bslp<0 and bdx>0 then
-		csy=ty+th-by
-		csx=tx-bx
+	elseif bslp<0 and balldx>0 then
+		csy=ty+th-bally
+		csx=tx-ballx
 		cslp=csy/csx
 		return csx>0 and cslp>=bslp
 		
 	--case 3:ball moving ⬆️⬅️
-	elseif bslp>0 and bdx<0 then
-		csy=ty+th-by
-		csx=tx+tw-bx
+	elseif bslp>0 and balldx<0 then
+		csy=ty+th-bally
+		csx=tx+tw-ballx
 		cslp=csy/csx
 		return csx<0 and cslp<=bslp
 		
 	--case 4: ball moving ⬇️⬅️
 	else
-		csy=ty-by
-		csx=tx+tw-bx
+		csy=ty-bally
+		csx=tx+tw-ballx
 		cslp=csy/csx
 		return csx<0 and cslp>=bslp
 	end
@@ -521,27 +569,27 @@ end --ball_defl()
 function check_adj_brick(i,direction)
 	
 	--setup adj brick part 1
-	local adj_x,adj_y=brick_x[i],brick_y[i]
+	local adjx,adjy=brickx[i],bricky[i]
 	
 	--setup adj brick part 2
 	if direction=="up" then
-		adj_y-=brick_h+2
+		adjy-=brickh+2
 		
 	elseif direction=="down"then
-		adj_y+=brick_h+2
+		adjy+=brickh+2
 		
 	elseif direction=="left" then
-		adj_x-=brick_w+2
+		adjx-=brickw+2
 		
 	elseif direction=="right"then
-		adj_x+=brick_w+2
+		adjx+=brickw+2
 	end
 	
 	--compare with all bricks 
-	for j=1, #brick_x do
-		if brick_v[j] and
-		brick_x[j]==adj_x and
-		brick_y[j]==adj_y then
+	for j=1, #brickx do
+		if brickv[j] and
+		brickx[j]==adjx and
+		bricky[j]==adjy then
 			return true
 		end
 	end
@@ -567,3 +615,9 @@ __sfx__
 000100001a570155500f5300a51000500005000050000500005000050000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000500001b7501875015750127500f7500d7500a75008750057500275000750007000070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000200001d7102e7302e720357102e700357002c700247001c00024700247001500014000130000d0000f00000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000200001e7102f7302f720367102e700357002c700247001c00024700247001500014000130000d0000f00000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000200001f7103073030720377102e700357002c700247001c00024700247001500014000130000d0000f00000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00020000207103173031720387102e700357002c700247001c00024700247001500014000130000d0000f00000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00020000217103273032720397102e700357002c700247001c00024700247001500014000130000d0000f00000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000200002271033730337203a7102e700357002c700247001c00024700247001500014000130000d0000f00000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000200002371034730347203b7102e700357002c700247001c00024700247001500014000130000d0000f00000000000000000000000000000000000000000000000000000000000000000000000000000000000
