@@ -2,49 +2,49 @@ pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
 function _init()
-	fgc=14
-	bgc=2
+	fgc=14 --foreground color
+	bgc=2 --background color
 	
-	brx={}
-	bry={}
-	brc={}
-	brwh=4
-	brm=4
+	brx={} --brick x positions
+	bry={} --brick y positions
+	brc={} --brick colors
+	brw=4 --brick width
+	brm=4 --brick margin
 	
-	bx=20
-	by=20
-	bdx=1.4
-	bdy=2.3
-	br=4
-	collided=false
+	bx=20 --ball x
+	by=20 --ball y
+	bdx=1.4 --ball delta x
+	bdy=2.3 --ball delta y
+	br=4 --ball radius
+	col=false --collision flag
 	
-	deflstyle=false
-	lastspec=nil
+	dfs=false --deflection style
+	lsp=nil --last special brick
 	
 	createbricks()
 end
 
 function _update60()
 	if btnp(❎) then
-		deflstyle=not deflstyle
+		dfs=not dfs
 	end
 	
-	update_ball()
+	updateball()
 end
 
 function _draw()
 	cls(bgc)
 	
 	print("stylized deflection",27,55,fgc)
-	print("❎ "..tostr(deflstyle),48,62,fgc)
+	print("❎ "..tostr(dfs),48,62,fgc)
 	
-	draw_bricks()
-	draw_ball()
+	drawbricks()
+	drawball()
 end
 
 function createbricks()
-	local function add_bricks(start,count,x,y,dx,dy)
-		for i=start,start+count-1 do
+	local function addbr(s,c,x,y,dx,dy)
+		for i=s,s+c-1 do
 			add(brx,x)
 			add(bry,y)
 			add(brc,fgc)
@@ -53,39 +53,32 @@ function createbricks()
 		end
 	end
 	
-	local brick_size=brwh+brm
+	local bsz=brw+brm --brick size
 	
-	-- top row
-	add_bricks(1,15,5,5,brick_size,0)
-	
-	-- right column
-	add_bricks(16,14,brx[15],5+brick_size,0,brick_size)
-	
-	-- bottom row
-	add_bricks(30,15,5,bry[29],brick_size,0)
-	
-	-- left column
-	add_bricks(45,13,5,5+brick_size,0,brick_size)
+	addbr(1,15,5,5,bsz,0)
+	addbr(16,14,brx[15],5+bsz,0,bsz)
+	addbr(30,15,5,bry[29],bsz,0)
+	addbr(45,13,5,5+bsz,0,bsz)
 end
 
-function draw_bricks()
-	for i=1, #brx do
-		rectfill(brx[i],bry[i],brx[i]+brwh,bry[i]+brwh,brc[i])
+function drawbricks()
+	for i=1,#brx do
+		rectfill(brx[i],bry[i],brx[i]+brw,bry[i]+brw,brc[i])
 	end
 end
 
-function draw_ball()
+function drawball()
 	circfill(bx,by,br,fgc)
 end
 
-function update_ball()
-	local nextx,nexty=bx+bdx,by+bdy
-	collided=false
+function updateball()
+	local nx,ny=bx+bdx,by+bdy
+	col=false
 	
 	for i=1,#brx do
-		if not collided and ball_col(nextx,nexty,brx[i],bry[i],brwh,brwh) then
-			handle_collision(i)
-			collided=true
+		if not col and ballcol(nx,ny,brx[i],bry[i],brw,brw) then
+			handlecol(i) --handle collision
+			col=true
 		end
 	end
 	
@@ -93,58 +86,58 @@ function update_ball()
 	by+=bdy
 end
 
-function handle_collision(i)
-	local is_hor=ball_defl(bx,by,bdx,bdy,brx[i],bry[i],brwh,brwh)
-	local adj_direction = get_adj_direction(is_hor)
-	local adj_brick=check_adj_brick(i,adj_direction)
+function handlecol(i)
+	local ih=balldefl(bx,by,bdx,bdy,brx[i],bry[i],brw,brw)
+	local ad=getadjdir(ih)
+	local ab=checkadjbr(i,ad)
 	
-	if adj_brick and not deflstyle then
-		update_special_brick(i)
+	if ab and not dfs then
+		updatespecbr(i) --update special brick
 	end
 	
-	if adj_brick and deflstyle then
-		stylized_deflection(i,is_hor)
+	if ab and dfs then
+		styledefl(i,ih) --stylized deflection
 	else
-		normal_deflection(is_hor)
+		normaldefl(ih) --normal deflection
 	end
 end
 
-function get_adj_direction(is_hor)
-	if is_hor then
+function getadjdir(ih)
+	if ih then
 		return bdx>0 and "left" or "right"
 	else
 		return bdy>0 and "up" or "down"
 	end
 end
 
-function update_special_brick(i)
-	if lastspec then
-		brc[lastspec]=fgc
+function updatespecbr(i)
+	if lsp then
+		brc[lsp]=fgc
 	end
-	lastspec=i
+	lsp=i
 	brc[i]=8
 end
 
-function stylized_deflection(i, is_hor)
-	if is_hor then
-		by=bdy<0 and bry[i]+brwh+br or bry[i]-br
+function styledefl(i,ih)
+	if ih then
+		by=bdy<0 and bry[i]+brw+br or bry[i]-br
 		bdy=-bdy
 	else
-		bx=bdx>0 and brx[i]-br or brx[i]+brwh+br
+		bx=bdx>0 and brx[i]-br or brx[i]+brw+br
 		bdx=-bdx
 	end
-	update_special_brick(i)
+	updatespecbr(i)
 end
 
-function normal_deflection(is_hor)
-	if is_hor then
+function normaldefl(ih)
+	if ih then
 		bdx=-bdx
 	else
 		bdy=-bdy
 	end
 end
 
-function ball_col(nx,ny,tx,ty,tw,th)
+function ballcol(nx,ny,tx,ty,tw,th)
 	if ny-br>ty+th then return false end
 	if ny+br<ty then return false end
 	if nx-br>tx+tw then return false end
@@ -152,52 +145,52 @@ function ball_col(nx,ny,tx,ty,tw,th)
 	return true
 end
 
-function ball_defl(ballx,bally,balldx,balldy,tx,ty,tw,th)
-	local bslp=balldy/balldx
-	local csx,csy,cslp
+function balldefl(bx,by,dx,dy,tx,ty,tw,th)
+	local bs=dy/dx
+	local cx,cy,cs
 	
-	if balldx==0 then
+	if dx==0 then
 		return false
-	elseif balldy==0 then
+	elseif dy==0 then
 		return true
-	elseif bslp>0 and balldx>0 then
-		csy=ty-bally
-		csx=tx-ballx
-		cslp=csy/csx
-		return csx>0 and cslp<=bslp
-	elseif bslp<0 and balldx>0 then
-		csy=ty+th-bally
-		csx=tx-ballx
-		cslp=csy/csx
-		return csx>0 and cslp>=bslp
-	elseif bslp>0 and balldx<0 then
-		csy=ty+th-bally
-		csx=tx+tw-ballx
-		cslp=csy/csx
-		return csx<0 and cslp<=bslp
+	elseif bs>0 and dx>0 then
+		cy=ty-by
+		cx=tx-bx
+		cs=cy/cx
+		return cx>0 and cs<=bs
+	elseif bs<0 and dx>0 then
+		cy=ty+th-by
+		cx=tx-bx
+		cs=cy/cx
+		return cx>0 and cs>=bs
+	elseif bs>0 and dx<0 then
+		cy=ty+th-by
+		cx=tx+tw-bx
+		cs=cy/cx
+		return cx<0 and cs<=bs
 	else
-		csy=ty-bally
-		csx=tx+tw-ballx
-		cslp=csy/csx
-		return csx<0 and cslp>=bslp
+		cy=ty-by
+		cx=tx+tw-bx
+		cs=cy/cx
+		return cx<0 and cs>=bs
 	end
 end
 
-function check_adj_brick(i,direction)
-	local adjx,adjy=brx[i],bry[i]
+function checkadjbr(i,d)
+	local ax,ay=brx[i],bry[i]
 	
-	if direction=="up" then
-		adjy-=brwh+brm
-	elseif direction=="down"then
-		adjy+=brwh+brm
-	elseif direction=="left" then
-		adjx-=brwh+brm
-	elseif direction=="right"then
-		adjx+=brwh+brm
+	if d=="up" then
+		ay-=brw+brm
+	elseif d=="down"then
+		ay+=brw+brm
+	elseif d=="left" then
+		ax-=brw+brm
+	elseif d=="right"then
+		ax+=brw+brm
 	end
 	
 	for j=1,#brx do
-		if brx[j]==adjx and bry[j]==adjy then
+		if brx[j]==ax and bry[j]==ay then
 			return true
 		end
 	end
