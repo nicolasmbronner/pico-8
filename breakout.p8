@@ -1,6 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
+--iron earthbreaker
+--by retropixie
+
+
 --[[ next #16
 
 
@@ -19,10 +23,6 @@ goals
 8.high score
 9.steampunk theme ]]
 
-
-
---iron earthbreaker
---by retropixie
 
 --###########################--
 --#     global functions    #--
