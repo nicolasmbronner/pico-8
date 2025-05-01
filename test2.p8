@@ -5,7 +5,6 @@ function _init()
 	pt=1   --player tile
 	px=63  --player x pos
 	py=50  --player y pos
-	cf=0   --collision flag
 	health=100
 	
 	ipickups()
@@ -18,7 +17,6 @@ end
 
 function _draw()
 	cls()
-	map()
 	spr(pt,px,py)
 	dpickups()
 end
@@ -37,31 +35,6 @@ function move()
 		px+=0.75
 	elseif btn(⬅️) then
 		px-=0.75
-	end
-	
-	if collide() then
-		px=lx
-		py=ly
-	end
-end
-
-function collide()
-	local ul=fget(
-		mget(px/8,py/8),cf)
-		
-	local ur=fget(
-		mget((px+7)/8,py/8),cf)
-		
-	local bl=fget(
-		mget(px/8,(py+7)/8),cf)
-		
-	local br=fget(
-		mget((px+7)/8,(py+7)/8),cf)
-	
-	if ul or ur or bl or br then
-		return true
-	else
-		return false
 	end
 end
 -->8
