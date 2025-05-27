@@ -27,6 +27,8 @@ end
 
 function _draw()
 	cls()
+	print(
+		"press ❎ to shoot")
 	for b in all(buls) do
 		spr(1,b.bx,b.by)
 	end
