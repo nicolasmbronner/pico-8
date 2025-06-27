@@ -34,11 +34,11 @@ function iplr()
 end
 
 function uplr()
-	--save plr x location
+	--save plr location
 	local lx=plr.x --last x
-	local ly=plr.y
+	local ly=plr.y --last y
 	
-	--how plr responds to ctrls
+	--player moving controls
 	if btn(➡️) then
 		plr.dx=0.8
 		plr.f=false
@@ -50,7 +50,8 @@ function uplr()
 	end
 	
 	--jumping controls
-	if btnp(❎) and onground() then
+	if btnp(❎) and
+	chkcol(1,6,8) then
 		jf=6
 		wp=true
 	end
@@ -64,7 +65,7 @@ function uplr()
 	plr.x+=plr.dx
 	
 		--if col x move back
-	if collidex() then
+	if chkcol(0,7,5) then
 		plr.x=lx
 	end
 	
@@ -75,11 +76,21 @@ function uplr()
 	end
 	
 	--vertical collision
-	if onground() then
+	if chkcol(1,6,8) then
 		plr.y=ly
 		jf=0
 	else
 		plr.y+=gty
+	end
+	
+	--ceiling collision
+	if chkcol(1,6,2) then
+		jf=0
+	end
+	
+	--fix intersecting w/floor
+	if chkcol(1,6,7) then
+		plr.y-=1
 	end
 end
 
@@ -88,32 +99,16 @@ function dplr()
 	spr(plr.sp,plr.x,plr.y,1,1,plr.f)
 end
 
-function onground()
-	--player tile x left / right
-	local ptxl=(plr.x+1)/8
-	local ptxr=(plr.x+6)/8
-	local pty=(plr.y+8)/8
+--check collision
+--xlo,xro: x offset left/right
+--yo: y offset
+function chkcol(xlo,xro,yo)
+	local ptxl=(plr.x+xlo)/8
+	local ptxr=(plr.x+xro)/8
+	local pty=(plr.y+yo)/8
 	
-	if mget(ptxl,pty)==10 or
-	mget(ptxr,pty)==10 then
-		return true
-	else
-		return false
-	end
-end
-
-function collidex()
-	--player tile y
-	local ptxl=(plr.x)/8
-	local ptxr=(plr.x+7)/8
-	local pty=(plr.y+5)/8
-	
-	if mget(ptxl,pty)==10 or
-	mget(ptxr,pty)==10 then
-		return true
-	else
-		return false
-	end
+	return mget(ptxl,pty)==10 or
+	       mget(ptxr,pty)==10
 end
 __gfx__
 000000000044440000065000000000000000000000000000000000000000000000000000000000bb33bb333b3b00000000000000000100000000000000000000
