@@ -2,17 +2,17 @@ pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
 function _init()
-	iplr()
+	iplr() --init player
 end
 
 function _update60()
-	uplr()
+	uplr() --update player
 end
 
 function _draw()
 	cls()
 	map()
-	dplr()
+	dplr() --draw player last
 end
 -->8
 --player--
@@ -21,19 +21,22 @@ function iplr()
 	--setup our player
 	
 	plr={
-		x=3*8,
+		x=3*8, --easy placemt by tile
 		y=4*8,
 		dx=0,    --delta x
 		f=false, --flip x
 		sp=1     --sprite
 	}
 	
+	jf=0      --jump force
 	gty=1     --gravity
+	wp=false  --button was pressed
 end
 
 function uplr()
 	--save plr x location
-	local lx=plr.x
+	local lx=plr.x --last x
+	local ly=plr.y
 	
 	--how plr responds to ctrls
 	if btn(➡️) then
@@ -46,16 +49,36 @@ function uplr()
 		plr.dx=0
 	end
 	
+	--jumping controls
+	if btnp(❎) and onground() then
+		jf=6
+		wp=true
+	end
+	
+	if wp and not btn(❎) then
+		jf/=2
+		wp=false
+	end
+	
 	--move player ⬅️/➡️
 	plr.x+=plr.dx
 	
-	--if col x move back
+		--if col x move back
 	if collidex() then
 		plr.x=lx
 	end
 	
-	--gravity
-	if not onground() then
+	--vertical movement
+	if jf>0 then
+		jf-=0.5
+		plr.y-=jf
+	end
+	
+	--vertical collision
+	if onground() then
+		plr.y=ly
+		jf=0
+	else
 		plr.y+=gty
 	end
 end
@@ -63,9 +86,6 @@ end
 function dplr()
 	--draw what the player is doing
 	spr(plr.sp,plr.x,plr.y,1,1,plr.f)
-	
-	onground()
-	print(over)
 end
 
 function onground()
@@ -84,8 +104,8 @@ end
 
 function collidex()
 	--player tile y
-	local ptxl=(plr.x+1)/8
-	local ptxr=(plr.x+6)/8
+	local ptxl=(plr.x)/8
+	local ptxr=(plr.x+7)/8
 	local pty=(plr.y+5)/8
 	
 	if mget(ptxl,pty)==10 or
