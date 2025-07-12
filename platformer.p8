@@ -19,6 +19,27 @@ function _draw()
 	cls()
 	map()
 	dplr() --draw player last
+	
+	--debug: detailed star info
+--	local y_pos = 1
+--	for k, st in pairs(★st) do
+--		--extract x,y from key "x,y"
+--		local comma_pos = nil
+--		for i = 1, #k do
+--			if sub(k, i, i) == "," then
+--				comma_pos = i
+--				break
+--			end
+--		end
+--		local x = sub(k, 1, comma_pos-1)
+--		local y = sub(k, comma_pos+1)
+--		
+--		print("★"..st.typ.." ("..x..","..y..") t:"..st.ctmr.." f:"..st.curf.." d:"..st.dir.." m:"..st.mfrm, 1, y_pos, 7)
+--		y_pos += 6
+--		
+--		--avoid going off screen
+--		if y_pos > 120 then break end
+--	end
 end
 -->8
 --player--
@@ -206,45 +227,66 @@ end
 -->8
 --stars--
 
+--create star state
+--(star config,star type)
+function crea★st(sc,st)
+	return {
+		ctmr=sc.tmr, --current timer
+		curf=sc.curf, --current frame
+		dir=sc.dir, --direction
+		--main frame multiplier
+		mfrm=rand(sc.mmin,sc.mmax),
+		typ=st
+	}
+end
+
+--random multiplier generator
+function rand(mmin,mmax)
+	return flr(rnd(
+	mmax-mmin+1))+mmin
+end
+
 --initiate stars
 function istars()
 	★={
-		fr={35,36,37},  --frames
-		mf=35,          --main frame
-		curf=1,        --current frame
-		tmr=15,         --timer
-		
-		--main frame multiplier
-		mmin=2,         --min
-		mmax=15,        --max
-		
-		dir=1           --direction
-	},
-	{
-		fr={51,52,53},
-		mf=51,
-		curf=1,
-		tmr=30,
-		mmin=10,
-		mmax=40,
-		dir=1
+		{
+			fr={35,36,37},--frames
+			mf=35,        --main frame
+			curf=1,       --current frame
+			tmr=15,       --timer
+			
+			--main frame multiplier
+			mmin=2,       --min
+			mmax=7,       --max
+			
+			dir=1         --direction
+		},
+		{
+			fr={51,52,53},
+			mf=51,
+			curf=1,
+			tmr=30,
+			mmin=2,
+			mmax=10,
+			dir=1
+		}
 	}
 	
 	--store inividual state of
 	--each ★ on the map
 	★st={}
 	
-	--scan map + init each ★
+	--scan map + init each ★:
 	for x=0,15 do
 		for y=0,15 do
 			local mt=mget(x,y) --map tile
 			for typ=1,#★ do --★ types
-				for fr in all(★[typ].fr) do
-					if mt==fr then
-						--next
-					end
-				end --fr in all(★[typ].fr
-			end --for ★typ
+				if mt==★[typ].mf then
+					★st[x..","..y]=
+					crea★st(★[typ],typ)
+					break
+				end --if mt==★[typ].mf
+			end --for (all ★ types)
 		end --for y
 	end --for x
 end
@@ -254,73 +296,6 @@ function animstars()
 	
 end
 
---function istars()
---	★s={
---		{
---			ts={35,36,37}, --tiles type 1
---			mf=35,  --main frame
---			tr=15,  --timer
---			mfm_min=2,  --main frame mult minimum
---			mfm_max=9,  --main frame mult maximum
---			dir=1,  --direction
---			curf=1  --index in ts table
---		},
---		{
---			ts={51,52,53}, --tiles type 2
---			mf=51,  --main frame
---			tr=10,  --timer
---			mfm_min=6,  --main frame mult minimum
---			mfm_max=20,  --main frame mult maximum
---			dir=1,  --direction
---			curf=1  --index in ts table
---		},
---		{
---			ts={38,39}, --tiles type 2
---			mf=38,  --main frame
---			tr=5,  --timer
---			mfm_min=20,  --main frame mult minimum
---			mfm_max=40,  --main frame mult maximum
---			dir=1,  --direction
---			curf=1  --index in ts table
---		},
---		{
---			ts={54,55,56}, --tiles type 2
---			mf=54,  --main frame
---			tr=7,  --timer
---			mfm_min=20,  --main frame mult minimum
---			mfm_max=40,  --main frame mult maximum
---			dir=1,  --direction
---			curf=1  --index in ts table
---		}
---	}
---	
---	--table to store each star state
---	★_states={}
---	
---	--initialize each star on the map
---	for x=0,15 do
---		for y=0,15 do
---			local tile=mget(x,y)
---			
---			--check for each star type
---			for star_type=1,#★s do
---				for t in all(★s[star_type].ts) do
---					if tile==t then
---						★_states[x..","..y]={
---							ctr=★s[star_type].tr,
---							dir=★s[star_type].dir,
---							curf=★s[star_type].curf,
---							mfm=flr(rnd(★s[star_type].mfm_max-★s[star_type].mfm_min+1))+★s[star_type].mfm_min,
---							type=star_type  --store star type
---						}
---						break
---					end
---				end
---			end
---		end
---	end
---end
---
 --function animstars()
 --	--animate each star individually
 --	for x=0,15 do
