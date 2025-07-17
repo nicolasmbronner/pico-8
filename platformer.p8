@@ -19,27 +19,6 @@ function _draw()
 	cls()
 	map()
 	dplr() --draw player last
-	
-	--debug: detailed star info
---	local y_pos = 1
---	for k, st in pairs(★st) do
---		--extract x,y from key "x,y"
---		local comma_pos = nil
---		for i = 1, #k do
---			if sub(k, i, i) == "," then
---				comma_pos = i
---				break
---			end
---		end
---		local x = sub(k, 1, comma_pos-1)
---		local y = sub(k, comma_pos+1)
---		
---		print("★"..st.typ.." ("..x..","..y..") t:"..st.ctmr.." f:"..st.curf.." d:"..st.dir.." m:"..st.mfrm, 1, y_pos, 7)
---		y_pos += 6
---		
---		--avoid going off screen
---		if y_pos > 120 then break end
---	end
 end
 -->8
 --player--
@@ -293,7 +272,49 @@ end
 
 --animate stars
 function animstars()
-	
+	for k,st in pairs(★st) do
+		
+		if st.ctmr <=0 then
+			--calculate next frame
+			local nf=st.curf+st.dir
+			
+			--check limits + invert dir
+			if nf>#★[st.typ].fr then
+				nf=#★[st.typ].fr -1
+				st.dir=-1
+			elseif nf<1 then
+				nf=2
+				st.dir=1
+			end --if nf>#★[st.typ].fr
+			
+			--save new frame
+			st.curf=nf
+			
+			--extract x,y from key "x,y"
+			local c=0 --comma
+			for i=1,#k do
+				if sub(k,i,i)=="," then
+					c=i
+					break
+				end --if sub(k,i,i)==","
+			end --for i=1,#k
+			
+			--+0 to convert in number
+			local x=sub(k,1,c-1)+0
+			local y=sub(k,c+1)+0
+			
+			--get new tile, apply to map
+			local nt=★[st.typ].fr[nf]
+			mset(x,y,nt)
+			
+			--reset timer
+			st.ctmr=180
+			
+		else --if st.ctmr <=0
+			--only increment timer
+			st.ctmr-=1
+		end --else
+	end --for k,st in pairs (★st)
 end
 
 --function animstars()
