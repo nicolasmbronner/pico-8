@@ -210,7 +210,9 @@ end
 --(star config,star type)
 function crea★st(sc,st)
 	return {
-		ctmr=sc.tmr, --current timer
+		--current timer
+		ctmr=sc.tmr*rand(
+		sc.mmin,sc.mmax),
 		curf=sc.curf, --current frame
 		dir=sc.dir, --direction
 		--main frame multiplier
@@ -228,7 +230,7 @@ end
 --initiate stars
 function istars()
 	★={
-		{
+		{ --big star
 			fr={35,36,37},--frames
 			mf=35,        --main frame
 			curf=1,       --current frame
@@ -236,17 +238,35 @@ function istars()
 			
 			--main frame multiplier
 			mmin=2,       --min
-			mmax=7,       --max
+			mmax=30,      --max
 			
 			dir=1         --direction
 		},
-		{
+		{ --huge star
 			fr={51,52,53},
 			mf=51,
 			curf=1,
-			tmr=30,
+			tmr=20,
+			mmin=10,
+			mmax=30,
+			dir=1
+		},
+		{ --micro star
+			fr={38,39},
+			mf=38,
+			curf=1,
+			tmr=20,
 			mmin=2,
 			mmax=10,
+			dir=1
+		},
+		{ --little star
+			fr={54,55,56},
+			mf=54,
+			curf=1,
+			tmr=10,
+			mmin=4,
+			mmax=20,
 			dir=1
 		}
 	}
@@ -308,7 +328,19 @@ function animstars()
 			mset(x,y,nt)
 			
 			--reset timer
-			st.ctmr=180
+			if nt==★[st.typ].mf then
+				--main frame:regenerate
+				--multiplier and use it
+				st.mfrm=rand(
+				★[st.typ].mmin,
+				★[st.typ].mmax)
+				
+				st.ctmr=
+				★[st.typ].tmr*st.mfrm
+			else --if nt==★[st.typ].mf
+				--other frames:base timer
+				st.ctmr=★[st.typ].tmr
+			end
 			
 		else --if st.ctmr <=0
 			--only increment timer
