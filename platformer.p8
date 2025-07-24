@@ -1,7 +1,14 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
+-- lost in the woods
+-- by retropixie
 
+-- === idees ===
+-- trouver du bois a bruler
+-- cache cache
+-- extra:trouver cle pour ouvrir
+-- porte fermee > bois
 
 function _init()
 	iplr() --init player
