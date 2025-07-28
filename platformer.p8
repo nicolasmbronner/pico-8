@@ -11,6 +11,8 @@ __lua__
 -- porte fermee > bois
 
 function _init()
+	w=3     --wood
+	pb={}   --put backs (interact.)
 	st="start" --state
 	iplr() --init player
 	
@@ -19,6 +21,7 @@ function _init()
 	
 	deb={}
 	ienemies()
+	ipickups()
 end
 
 function _update60()
@@ -32,6 +35,7 @@ function _update60()
 		u★() --animate stars
 		uhouse()   --house > win
 	elseif st=="dead" then
+		--todo:no back to title
 		uplr()
 		animategrass()
 		uhazards()
@@ -40,9 +44,10 @@ function _update60()
 		u★()
 		uhouse()
 		if btnp(🅾️) then
-			plr.x=3*8
-			plr.y=12*8
+			--plr.x=3*8
+			--plr.y=12*8
 			st="play"
+			respawn()
 		end
 		plr.sp=19
 	elseif st=="start" then
@@ -54,6 +59,7 @@ function _update60()
 			plr.x=3*8
 			plr.y=12*8
 			st="play"
+			respawn()
 		end
 	end
 end
@@ -242,12 +248,27 @@ end
 -->8
 --interractables--
 
+function ipickups()
+	for x=0,15 do
+		for y=0,15 do
+			if mget(x,y)==8 then
+				add(pb,{
+					tx=x,
+					ty=y,
+					sp=8
+				})
+			end
+		end --for y
+	end ---for x
+end
+
 function upickups()
 	local ptx=(plr.x+4)/8
 	local pty=(plr.y+5)/8
 	
 	if mget(ptx,pty)==8 then
 		mset(ptx,pty,16)
+		w-=1
 	end
 end
 
@@ -255,7 +276,8 @@ function uhouse()
 	local ptx=(plr.x+4)/8
 	local pty=(plr.y+5)/8
 	
-	if mget(ptx,pty)==49 then
+	if mget(ptx,pty)==49 and
+	w==0 then
 		st="win"
 	end
 end
@@ -283,6 +305,13 @@ function ienemies()
 		for y=0,15 do
 			local mt=mget(x,y) --map tile
 			if mt==41 then
+				
+				add(pb,{
+					tx=x,
+					ty=y,
+					sp=41
+				})
+				
 				mset(x,y,0) --delete tile
 				encnt+=1
 				
@@ -499,6 +528,16 @@ function u★()
 			st.ctmr-=1
 		end --else
 	end --for k,st in pairs (★st)
+end
+-->8
+--respawn--
+
+function respawn()
+	for t in all(pb) do
+		mset(t.tx,t.ty,t.sp)
+		del(pb,t)
+	end
+	_init()
 end
 __gfx__
 000000000044440000000000004444000044440000444400000000000044440000000000000000bb33bb333b3b00000000000000000000000000000000010100
