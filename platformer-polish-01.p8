@@ -116,12 +116,12 @@ function iplr()
 		dx=0,      --delta x
 		f=false,   --flip x
 		sp=1,      --sprite
-		st="idle"  --state
+		st="idle",  --state
+		
+		jf=0,      --jump force
+		g=phys.g,   --gravity
+		wp=false   --jump was pressed
 	}
-	
-	jf=0      --jump force
-	gty=1.5   --gravity
-	wp=false  --button was pressed
 end --iplr()
 
 function uplr()
@@ -132,13 +132,13 @@ function uplr()
 	--player moving controls
 	if btn(➡️) and
 	st=="play" then
-		plr.dx=0.8
+		plr.dx=phys.speed
 		plr.f=false
 		plr.st="run"
 		
 	elseif btn(⬅️) and
 	st=="play" then
-		plr.dx=-0.8
+		plr.dx=-phys.speed
 		plr.f=true
 		plr.st="run"
 		
@@ -151,13 +151,13 @@ function uplr()
 	if btnp(🅾️) and
 	chkcol(1,6,8) and
 	st=="play" then
-		jf=7
-		wp=true
+		plr.jf=phys.jump
+		plr.wp=true
 	end
 	
-	if wp and not btn(🅾️) then
-		jf/=2
-		wp=false
+	if plr.wp and not btn(🅾️) then
+		plr.jf/=2
+		plr.wp=false
 	end
 	
 	--move player ⬅️/➡️
@@ -169,26 +169,26 @@ function uplr()
 	end
 	
 	--vertical movement
-	if jf>0 then
+	if plr.jf>0 then
 		plr.st="jump"
-		jf-=0.5
-		plr.y-=jf
+		plr.jf-=0.5
+		plr.y-=plr.jf
 	end
 	
 	--vertical collision
 	if chkcol(1,6,8) then
 		plr.y=ly
-		jf=0
+		plr.jf=0
 	else
-		plr.y+=gty
-		if jf <= 0 then
+		plr.y+=plr.g
+		if plr.jf <= 0 then
 			plr.st="fall"
 		end
 	end
 	
 	--ceiling collision
 	if chkcol(1,6,2) then
-		jf=0
+		plr.jf=0
 	end
 	
 	--fix intersecting w/floor
@@ -208,6 +208,17 @@ function dplr()
 	spr(plr.sp,plr.x,plr.y,1,1,plr.f)
 end --dplr()
 
+--local helper: true if
+--tile is on the list
+local function tile_in(lis,til)
+	for i=1,#lis do
+		if til==lis[i] then
+			return true
+		end
+	end
+	return false
+end
+
 --check collision
 --xlo,xro: x offset left/right
 --yo: y offset
@@ -216,10 +227,11 @@ function chkcol(xlo,xro,yo)
 	local ptxr=(plr.x+xro)/8
 	local pty=(plr.y+yo)/8
 	
-	return mget(ptxl,pty)==10 or
-	       mget(ptxr,pty)==10 or
-	       mget(ptxl,pty)==26 or
-	       mget(ptxr,pty)==26
+	local tl=mget(ptxl,pty)
+	local tr=mget(ptxr,pty)
+	
+	return tile_in(tiles.solid,tl)
+	    or tile_in(tiles.solid,tr)
 end --chkcol()
 -->8
 --cfg--
@@ -272,33 +284,41 @@ world={
 
 --animation--
 
+--animatin constants
+local anim={
+	idle_start=1,idle_end=2.9,
+	idle_step=0.02,run_start=3,
+	run_end=6.7,run_step=0.15,
+	jump=7,fall=18
+}
+
 function animate_plr()
 	
 	--handle animation state
 	
 	--idle
 	if plr.st=="idle" then
-		if plr.sp<2.9 then
-			plr.sp+=.02
+		if plr.sp<anim.idle_end then
+			plr.sp+=anim.idle_step
 		else
-			plr.sp=1
+			plr.sp=anim.idle_start
 		end
 	
 	--run
 	elseif plr.st=="run" then
-		if plr.sp<6.7 then
-			plr.sp+=.15
+		if plr.sp<anim.run_end then
+			plr.sp+=anim.run_step
 		else
-			plr.sp=3
+			plr.sp=anim.run_start
 		end
 	
 	--jump
 	elseif plr.st=="jump" then
-		plr.sp=7
+		plr.sp=anim.jump
 	
 	--fall
 	elseif plr.st=="fall" then
-		plr.sp=18
+		plr.sp=anim.fall
 	end
 end
 
