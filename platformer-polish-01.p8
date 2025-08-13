@@ -23,21 +23,10 @@ end --_init()
 function _update60()
 	
 	if st=="play" then
-		uplr() --update player
-		animategrass() --animate grass
-		uhazards() --hazards
-		uenemies() --enemies
-		upickups() --pickups
-		u★() --animate stars
-		uhouse()   --house > win
+		world_update_play()
 		
 	elseif st=="dead" then
-		uplr()
-		animategrass()
-		uhazards()
-		uenemies()
-		upickups()
-		u★()
+		world_update_dead()
 		if btnp(🅾️) then
 			st="play"
 			respawn()
@@ -99,17 +88,15 @@ function _draw()
 		print("you win!",
 		48+128*lvl,60,7)
 		
-		map()
-		denemies() --draw enemies
-		dplr() --draw player last
+		world_draw()
 		
 	else --st=="play"
-		map()
-		denemies() --draw enemies
-		dplr() --draw player last
+		world_draw()
 	end
 end --_draw()
 -->8
+--game--
+
 --player--
 
 spwn={ --spawn positions (plr)
@@ -235,6 +222,54 @@ function chkcol(xlo,xro,yo)
 	       mget(ptxr,pty)==26
 end --chkcol()
 -->8
+--cfg--
+
+tiles= {
+	empty=0,
+	solid={10,26}, --ground/wall
+	grass={28,29}, --animated
+	wood=8,        --pickup
+	enemy_spawn=41,
+	door=49,       --house door
+	hazard={23,24,25}, --spikes
+	star={ --frame+default timers
+		big   ={main=35,
+		        frames={35,36,37},
+		        tmr=15,mmin=2,mmax=30
+		},
+		huge  ={main=51,
+		        frames={51,52,53},
+		        tmr=20,mmin=10,mmax=30
+		},
+		micro ={main=38,
+		        frames={38,39},
+		        tmr=20,mmin=2,mmax=10
+		},
+		small ={main=54,
+		        frames={54,55,56},
+		        tmr=10,mmin=4,mmax=20
+		       }
+	}
+}
+
+snd={
+	death=0,
+	win=1,
+	pickup=2,
+	door_locked=3
+}
+
+phys={
+	g=1.5,
+	jump=7,
+	speed=0.8
+}
+
+world={
+	level_w=128,
+	bottom_y=15*8
+}
+
 --animation--
 
 function animate_plr()
@@ -284,6 +319,35 @@ function animategrass()
 	end
 end
 -->8
+--world--
+
+function world_update_play()
+	uplr()
+	animategrass()
+	uhazards()
+	uenemies()
+	upickups()
+	u★()
+	uhouse()
+end
+
+function world_update_dead()
+	uplr()
+	animategrass()
+	uhazards()
+	uenemies()
+	upickups()
+	u★()
+end
+
+function world_draw()
+	map()
+	denemies()
+	dplr()
+end
+
+
+
 --interractables--
 
 function ipickups()
@@ -334,6 +398,8 @@ function uhouse()
 	end
 end
 -->8
+--player--
+
 --danger--
 
 --enemies--
@@ -434,20 +500,24 @@ end --denemies()
 function uhazards()
 	local ptx=(plr.x+4)/8
 	local pty=(plr.y+5)/8
+	local tile=mget(ptx,pty)
 	
 	-- test if touch player
-	if mget(ptx,pty)==23 or
-	mget(ptx,pty)==24 or
-	mget(ptx,pty)==25 or
-	plr.y>15*8 then
+	if tile==tiles.hazard[1]
+	or tile==tiles.hazard[2]
+	or tile==tiles.hazard[3]
+	or plr.y>world.bottom_y
+	then
 		plr.sp=20
 		if not (st=="dead") then
 			st="dead"
 			deathsfxclear=true
-		end
-	end
+		end --if state is not "dead"
+	end --if hit hazard/scr-btm
 end
 -->8
+--enemies--
+
 --stars--
 
 --create star state
@@ -593,6 +663,8 @@ function u★()
 	end --for k,st in pairs (★st)
 end
 -->8
+--pickups--
+
 --respawn--
 
 function respawn()
@@ -620,6 +692,14 @@ function respawn()
 	ienemies() --init enemies
 	ipickups() --init pickups
 end
+-->8
+--hazards-house--
+-->8
+--stars--
+-->8
+--putbacks-spawn--
+-->8
+--util--
 __gfx__
 000000000044440000000000004444000044440000444400000000000044440000000000000000bb33bb333b3b00000000000000000000000000000000010100
 0000000004444f400044440004444f4004444f4004444f400044440004444f4000b0000000000b333330000333b0000000000000004422000000000001011110
