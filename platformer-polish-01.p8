@@ -384,35 +384,41 @@ function ipickups()
 	end ---for x
 end
 
-function upickups()
+local function player_tile()
 	local ptx=(plr.x+4)/8
 	local pty=(plr.y+5)/8
+	return mget(ptx,pty),ptx,pty
+end
+
+function upickups()
+	local tile,ptx,pty=player_tile()
 	
-	if mget(ptx,pty)==8 then
-		mset(ptx,pty,0)
+	if tile==tiles.wood then
+		mset(ptx,pty,tiles.empty)
 		w-=1
-		sfx(2)
+		sfx(snd.pickup)
 		intersfxclear=true
 	end
 end
 
 function uhouse()
-	local ptx=(plr.x+4)/8
-	local pty=(plr.y+5)/8
+	local tile=player_tile()
 	
-	if mget(ptx,pty)==49 then
+	if tile==tiles.door then
 		if w==0 then
 			st="win"
 			if intersfxclear then
-				sfx(1)
+				sfx(snd.win)
 				intersfxclear=false
 			end --if intersfxclear
+			
 		else --if w==0
 			if intersfxclear then
-				sfx(3)
+				sfx(snd.door_locked)
 				intersfxclear=false
 			end --if intersfxclear
 		end --else > if w==0
+		
 	else --if mget(ptx,pty)==14
 		intersfxclear=true
 	end
