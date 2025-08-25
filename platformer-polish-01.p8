@@ -15,8 +15,6 @@ function _init()
 	finit=true  --first init
 	lvl=0   --level
 	lvls=2  --total levels
-	intersfxclear=true
-	deathsfxclear=true
 	respawn()
 end --_init()
 
@@ -27,20 +25,28 @@ function _update60()
 		
 	elseif st=="dead" then
 		world_update_dead()
+		
+		--on restart: reset key
 		if btnp(🅾️) then
 			st="play"
 			respawn()
+			sr("d")
 			return
 		end
+		--death pose
 		plr.sp=19
+		
+		--play once while dead
+		--key "d"
+		so(snd.death,"d") --play once
 		if deathsfxclear then
 				sfx(0)
 				deathsfxclear=false
 		end --if intersfxclear
 	elseif st=="start" then
+	
 		if btnp(🅾️) then
 			st="play"
-			deathsfxclear=true
 		end
 		
 	elseif st=="win" then
@@ -48,6 +54,7 @@ function _update60()
 			if lvl<lvls then
 				lvl+=1
 				respawn()
+				
 			else
 				lvl=0
 				respawn()
@@ -397,30 +404,30 @@ function upickups()
 		mset(ptx,pty,tiles.empty)
 		w-=1
 		sfx(snd.pickup)
-		intersfxclear=true
 	end
 end
 
 function uhouse()
-	local tile=player_tile()
+	--tile under player
+	local t=player_tile()
 	
-	if tile==tiles.door then
+	if t==tiles.door then
 		if w==0 then
 			st="win"
-			if intersfxclear then
-				sfx(snd.win)
-				intersfxclear=false
-			end --if intersfxclear
+			
+			--play once on door
+			--key "dw"
+			so(snd.win,"dw") --door win
 			
 		else --if w==0
-			if intersfxclear then
-				sfx(snd.door_locked)
-				intersfxclear=false
-			end --if intersfxclear
+			--locked: play once
+			--key "dl"
+			so(snd.door_locked,"dl") --door locked
 		end --else > if w==0
 		
 	else --if mget(ptx,pty)==14
-		intersfxclear=true
+		--left door: reset both
+		sr("dw") sr("dl") --reset
 	end
 end
 -->8
@@ -700,8 +707,6 @@ function respawn()
 	end
 	
 	w=3     --wood (interactables)
-	intersfxclear=true
-	deathsfxclear=true
 	--put backs (enemies+interract)
 	pb={}
 	iplr()     --init player
@@ -726,6 +731,42 @@ end
 --putbacks-spawn--
 -->8
 --util--
+
+-- sound_once helpers
+-- _sf:  flags per key
+
+-- keys:
+--  "d" dead
+--  "dw" door win
+--  "dl" door lock
+
+-- api:
+-- so(id,k): play once
+-- sr(k): reset one
+-- srm(...): reset many
+
+local _sf={} --played flags
+
+--so=sound once
+--id=number, k:string
+function so(id,k)
+	if not _sf[k] then
+		sfx(id)
+		_sf[k]=true
+	end
+end
+
+--sr=sound reset
+--k:string
+function sr(k) _sf[k]=nil end
+
+--srm=reset many
+--call:srm("dw","dl")
+function srm(...)
+	for k in all({...}) do
+		_sf[k]=nil
+	end
+end
 __gfx__
 000000000044440000000000004444000044440000444400000000000044440000000000000000bb33bb333b3b00000000000000000000000000000000010100
 0000000004444f400044440004444f4004444f4004444f400044440004444f4000b0000000000b333330000333b0000000000000004422000000000001011110
