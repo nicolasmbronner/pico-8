@@ -2,7 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
 function _init()
-	x=64 y=64 dx=0 dy=0 s=1 d=1.15	
+	x=64 y=64 dx=0 dy=0 s=1 d=1.15
 end
 
 

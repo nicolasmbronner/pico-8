@@ -1,0 +1,107 @@
+pico-8 cartridge // http://www.pico-8.com
+version 42
+__lua__
+-- explosions system --
+-- by retropixie --
+
+
+--global state
+particles={}
+colors={5,9,10,7}
+max_life=5
+
+
+-- === main loop ===
+
+function _init()
+	init_explosions()  --below
+end
+
+function _update60()
+	update_particles() --below
+	handle_input()     --below
+end
+
+function _draw()
+	draw_all()         --below
+end
+
+
+-- === helper functions ===
+
+--called by _init()
+function init_explosions()
+	particles={}
+end
+
+--called by _update()
+function update_particles()
+	for p in all(particles) do
+		-- move particle
+		p.x+=p.vx
+		p.y+=p.vy
+		
+		--decay over time
+		p.size-=.1
+		p.life-=.1
+	end --for
+	
+	--remove dead ones
+	for p in all(particles) do
+		if p.life<=0 then
+			del(particles,p)
+		end
+	end --for
+end --update_particles()
+
+--called by _update60()
+function handle_input()
+	if btnp(❎) then
+		--spawn at random position
+		local ex=rnd(128)
+		local ey=rnd(128)
+		create_explosion(ex,ey)--below
+	end
+end --handle_input()
+
+--called by _draw()
+function draw_all()
+	cls()
+	for p in all(particles) do
+		local c_idx=flr(p.life)
+		
+		if c_idx>0
+		and c_idx<=#colors then
+			circfill(
+				p.x,p.y,p.size,
+				colors[c_idx]
+			)
+		end --if
+	end --for
+end --draw_all()
+
+-- called by handle_input()
+function create_explosion(px,py)
+	for i=0,20 do
+		add(particles,{
+			x=px,
+			y=py,
+			vx=1-rnd(2), --velocity x
+			vy=1-rnd(2),
+			size=2+rnd(5),
+			life=max_life
+		})
+	end --for
+	sfx(rnd(3)) --explosion sfx
+end --create_explosion()
+__gfx__
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00700700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00700700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+__sfx__
+000200003f670002603c6600426039650142403563033640326502f6602c6602966026660226601e6601a650176501364012630106300d6300c6200a620096100761005610046100361002610016100000000000
+0004000039670012701d6601a6402c64029650216501e6501e6501e6601b6501a6401a6301c6101c6201c6301b6401a64017630156300f6200a61005610046100261001610006100000000000000000000000000
+0005000034650002503b65000250296502b6502865025650216501d6501764007640126400f6400c6400a64006630056300463004630036200161000610006000000000000000000000000000000000000000000
