@@ -4,49 +4,58 @@ __lua__
 -- lost in the woods
 -- by retropixie
 
--- === idees ===
--- trouver du bois a bruler
--- cache cache
--- extra:trouver cle pour ouvrir
--- porte fermee > bois
+-- === ideas ===
+-- find your way home
+-- theme:hide and seek
+-- twist:paranormal slasher
+-- level structure:nun massacre
 
 
 function _init()
 	finit=true  --first init
-	lvl=0   --level
-	lvls=2  --total levels
+	lvl=0       --level
+	lvls=2      --total levels
+	intersfxclear=true
+	deathsfxclear=true
 	respawn()
-end --_init()
+end -- _init()
 
 function _update60()
 	
 	if st=="play" then
-		world_update_play()
+		uplr()     --update player
+		animategrass() --animate grass
+		uhazards() --hazards
+		uenemies() --enemies
+		upickups() --pickups
+		u★()      --animate stars
+		uhouse()   --house > win
 		
 	elseif st=="dead" then
-		world_update_dead()
+		uplr()
+		animategrass()
+		uhazards()
+		uenemies()
+		upickups()
+		u★()
 		
-		--on restart: reset key
 		if btnp(🅾️) then
 			st="play"
 			respawn()
-			sr("d")
 			return
 		end
-		--death pose
+		
 		plr.sp=19
 		
-		--play once while dead
-		--key "d"
-		so(snd.death,"d") --play once
 		if deathsfxclear then
 				sfx(0)
 				deathsfxclear=false
 		end --if intersfxclear
+		
 	elseif st=="start" then
-	
 		if btnp(🅾️) then
 			st="play"
+			deathsfxclear=true
 		end
 		
 	elseif st=="win" then
@@ -54,12 +63,11 @@ function _update60()
 			if lvl<lvls then
 				lvl+=1
 				respawn()
-				
 			else
 				lvl=0
 				respawn()
 			end
-		end
+		end --if btnp(🅾️)
 	end --if state==[all states]
 end --_update60
 
@@ -95,21 +103,23 @@ function _draw()
 		print("you win!",
 		48+128*lvl,60,7)
 		
-		world_draw()
+		map()
+		denemies() --draw enemies
+		dplr() --draw player last
 		
 	else --st=="play"
-		world_draw()
+		map()
+		denemies() --draw enemies
+		dplr() --draw player last
 	end
 end --_draw()
 -->8
---game--
-
 --player--
 
 spwn={ --spawn positions (plr)
-	{x=3*8,y=12*8}, --lvl 1
-	{x=19*8,y=14*8},--lvl 2
-	{x=32*8,y=0*8}  --lvl 3
+	{x=3*8,y=12*8},  --lvl 1
+	{x=19*8,y=14*8}, --lvl 2
+	{x=32*8,y=0*8}   --lvl 3
 }
 
 function iplr()
@@ -123,12 +133,12 @@ function iplr()
 		dx=0,      --delta x
 		f=false,   --flip x
 		sp=1,      --sprite
-		st="idle",  --state
-		
-		jf=0,      --jump force
-		g=phys.g,   --gravity
-		wp=false   --jump was pressed
+		st="idle"  --state
 	}
+	
+	jf=0      --jump force
+	gty=1.5   --gravity
+	wp=false  --button was pressed
 end --iplr()
 
 function uplr()
@@ -137,15 +147,15 @@ function uplr()
 	local ly=plr.y --last y
 	
 	--player moving controls
-	if btn(➡️) and
-	st=="play" then
-		plr.dx=phys.speed
+	if btn(➡️)
+	and st=="play" then
+		plr.dx=0.8
 		plr.f=false
 		plr.st="run"
 		
-	elseif btn(⬅️) and
-	st=="play" then
-		plr.dx=-phys.speed
+	elseif btn(⬅️)
+	and st=="play" then
+		plr.dx=-0.8
 		plr.f=true
 		plr.st="run"
 		
@@ -155,16 +165,16 @@ function uplr()
 	end
 	
 	--jumping controls
-	if btnp(🅾️) and
-	chkcol(1,6,8) and
-	st=="play" then
-		plr.jf=phys.jump
-		plr.wp=true
+	if btnp(🅾️)
+	and chkcol(1,6,8)
+	and st=="play" then
+		jf=7
+		wp=true
 	end
 	
-	if plr.wp and not btn(🅾️) then
-		plr.jf/=2
-		plr.wp=false
+	if wp and not btn(🅾️) then
+		jf/=2
+		wp=false
 	end
 	
 	--move player ⬅️/➡️
@@ -176,26 +186,27 @@ function uplr()
 	end
 	
 	--vertical movement
-	if plr.jf>0 then
+	if jf>0 then
 		plr.st="jump"
-		plr.jf-=0.5
-		plr.y-=plr.jf
+		jf-=0.5
+		plr.y-=jf
 	end
 	
 	--vertical collision
 	if chkcol(1,6,8) then
 		plr.y=ly
-		plr.jf=0
+		jf=0
+		
 	else
-		plr.y+=plr.g
-		if plr.jf <= 0 then
+		plr.y+=gty
+		if jf <= 0 then
 			plr.st="fall"
 		end
 	end
 	
 	--ceiling collision
 	if chkcol(1,6,2) then
-		plr.jf=0
+		jf=0
 	end
 	
 	--fix intersecting w/floor
@@ -212,19 +223,10 @@ end --uplr()
 
 function dplr()
 	--draw what the player is doing
-	spr(plr.sp,plr.x,plr.y,1,1,plr.f)
+	spr(
+		plr.sp,plr.x,plr.y,1,1,plr.f
+	)
 end --dplr()
-
---local helper: true if
---tile is on the list
-local function tile_in(lis,til)
-	for i=1,#lis do
-		if til==lis[i] then
-			return true
-		end
-	end
-	return false
-end
 
 --check collision
 --xlo,xro: x offset left/right
@@ -234,70 +236,13 @@ function chkcol(xlo,xro,yo)
 	local ptxr=(plr.x+xro)/8
 	local pty=(plr.y+yo)/8
 	
-	local tl=mget(ptxl,pty)
-	local tr=mget(ptxr,pty)
-	
-	return tile_in(tiles.solid,tl)
-	    or tile_in(tiles.solid,tr)
+	return mget(ptxl,pty)==10 or
+	       mget(ptxr,pty)==10 or
+	       mget(ptxl,pty)==26 or
+	       mget(ptxr,pty)==26
 end --chkcol()
 -->8
---cfg--
-
-tiles= {
-	empty=0,
-	solid={10,26}, --ground/wall
-	grass={28,29}, --animated
-	wood=8,        --pickup
-	enemy_spawn=41,
-	door=49,       --house door
-	hazard={23,24,25}, --spikes
-	star={ --frame+default timers
-		big   ={main=35,
-		        frames={35,36,37},
-		        tmr=15,mmin=2,mmax=30
-		},
-		huge  ={main=51,
-		        frames={51,52,53},
-		        tmr=20,mmin=10,mmax=30
-		},
-		micro ={main=38,
-		        frames={38,39},
-		        tmr=20,mmin=2,mmax=10
-		},
-		small ={main=54,
-		        frames={54,55,56},
-		        tmr=10,mmin=4,mmax=20
-		       }
-	}
-}
-
-snd={
-	death=0,
-	win=1,
-	pickup=2,
-	door_locked=3
-}
-
-phys={
-	g=1.5,
-	jump=7,
-	speed=0.8
-}
-
-world={
-	level_w=128,
-	bottom_y=15*8
-}
-
 --animation--
-
---animatin constants
-local anim={
-	idle_start=1,idle_end=2.9,
-	idle_step=0.02,run_start=3,
-	run_end=6.7,run_step=0.15,
-	jump=7,fall=18
-}
 
 function animate_plr()
 	
@@ -305,27 +250,27 @@ function animate_plr()
 	
 	--idle
 	if plr.st=="idle" then
-		if plr.sp<anim.idle_end then
-			plr.sp+=anim.idle_step
+		if plr.sp<2.9 then
+			plr.sp+=.02
 		else
-			plr.sp=anim.idle_start
+			plr.sp=1
 		end
 	
 	--run
 	elseif plr.st=="run" then
-		if plr.sp<anim.run_end then
-			plr.sp+=anim.run_step
+		if plr.sp<6.7 then
+			plr.sp+=.15
 		else
-			plr.sp=anim.run_start
+			plr.sp=3
 		end
 	
 	--jump
 	elseif plr.st=="jump" then
-		plr.sp=anim.jump
+		plr.sp=7
 	
 	--fall
 	elseif plr.st=="fall" then
-		plr.sp=anim.fall
+		plr.sp=18
 	end
 end
 
@@ -346,35 +291,6 @@ function animategrass()
 	end
 end
 -->8
---world--
-
-function world_update_play()
-	uplr()
-	animategrass()
-	uhazards()
-	uenemies()
-	upickups()
-	u★()
-	uhouse()
-end
-
-function world_update_dead()
-	uplr()
-	animategrass()
-	uhazards()
-	uenemies()
-	upickups()
-	u★()
-end
-
-function world_draw()
-	map()
-	denemies()
-	dplr()
-end
-
-
-
 --interractables--
 
 function ipickups()
@@ -391,48 +307,40 @@ function ipickups()
 	end ---for x
 end
 
-local function player_tile()
+function upickups()
 	local ptx=(plr.x+4)/8
 	local pty=(plr.y+5)/8
-	return mget(ptx,pty),ptx,pty
-end
-
-function upickups()
-	local tile,ptx,pty=player_tile()
 	
-	if tile==tiles.wood then
-		mset(ptx,pty,tiles.empty)
+	if mget(ptx,pty)==8 then
+		mset(ptx,pty,0)
 		w-=1
-		sfx(snd.pickup)
+		sfx(2)
+		intersfxclear=true
 	end
 end
 
 function uhouse()
-	--tile under player
-	local t=player_tile()
+	local ptx=(plr.x+4)/8
+	local pty=(plr.y+5)/8
 	
-	if t==tiles.door then
+	if mget(ptx,pty)==49 then
 		if w==0 then
 			st="win"
-			
-			--play once on door
-			--key "dw"
-			so(snd.win,"dw") --door win
-			
+			if intersfxclear then
+				sfx(1)
+				intersfxclear=false
+			end --if intersfxclear
 		else --if w==0
-			--locked: play once
-			--key "dl"
-			so(snd.door_locked,"dl") --door locked
+			if intersfxclear then
+				sfx(3)
+				intersfxclear=false
+			end --if intersfxclear
 		end --else > if w==0
-		
 	else --if mget(ptx,pty)==14
-		--left door: reset both
-		sr("dw") sr("dl") --reset
+		intersfxclear=true
 	end
 end
 -->8
---player--
-
 --danger--
 
 --enemies--
@@ -533,24 +441,20 @@ end --denemies()
 function uhazards()
 	local ptx=(plr.x+4)/8
 	local pty=(plr.y+5)/8
-	local tile=mget(ptx,pty)
 	
 	-- test if touch player
-	if tile==tiles.hazard[1]
-	or tile==tiles.hazard[2]
-	or tile==tiles.hazard[3]
-	or plr.y>world.bottom_y
-	then
+	if mget(ptx,pty)==23 or
+	mget(ptx,pty)==24 or
+	mget(ptx,pty)==25 or
+	plr.y>15*8 then
 		plr.sp=20
 		if not (st=="dead") then
 			st="dead"
 			deathsfxclear=true
-		end --if state is not "dead"
-	end --if hit hazard/scr-btm
+		end
+	end
 end
 -->8
---enemies--
-
 --stars--
 
 --create star state
@@ -696,8 +600,6 @@ function u★()
 	end --for k,st in pairs (★st)
 end
 -->8
---pickups--
-
 --respawn--
 
 function respawn()
@@ -707,6 +609,8 @@ function respawn()
 	end
 	
 	w=3     --wood (interactables)
+	intersfxclear=true
+	deathsfxclear=true
 	--put backs (enemies+interract)
 	pb={}
 	iplr()     --init player
@@ -722,50 +626,6 @@ function respawn()
 	i★()      --init stars
 	ienemies() --init enemies
 	ipickups() --init pickups
-end
--->8
---hazards-house--
--->8
---stars--
--->8
---putbacks-spawn--
--->8
---util--
-
--- sound_once helpers
--- _sf:  flags per key
-
--- keys:
---  "d" dead
---  "dw" door win
---  "dl" door lock
-
--- api:
--- so(id,k): play once
--- sr(k): reset one
--- srm(...): reset many
-
-local _sf={} --played flags
-
---so=sound once
---id=number, k:string
-function so(id,k)
-	if not _sf[k] then
-		sfx(id)
-		_sf[k]=true
-	end
-end
-
---sr=sound reset
---k:string
-function sr(k) _sf[k]=nil end
-
---srm=reset many
---call:srm("dw","dl")
-function srm(...)
-	for k in all({...}) do
-		_sf[k]=nil
-	end
 end
 __gfx__
 000000000044440000000000004444000044440000444400000000000044440000000000000000bb33bb333b3b00000000000000000000000000000000010100
